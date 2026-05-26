@@ -94,6 +94,7 @@ body{
     padding:20px;
     transition:.4s;
     z-index:100;
+    overflow-y:auto; /* Permite rolagem na sidebar se a tela for pequena */
 }
 
 .sidebar.hidden{
@@ -113,7 +114,8 @@ body{
 .section-title{
     color:#cbd5e1;
     font-size:14px;
-    margin-bottom:25px;
+    margin-bottom:15px;
+    margin-top:20px;
     line-height:1.4;
 }
 
@@ -138,6 +140,36 @@ body{
     background:var(--accent);
     color:black;
     font-weight:700;
+}
+
+/* ZOOM CONTROLS */
+.zoom-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.zoom-container .btn {
+    width: auto;
+    margin-bottom: 0;
+    padding: 8px 12px;
+    background: transparent;
+    text-align: center;
+}
+
+.zoom-container .btn:hover {
+    background: #2563eb;
+}
+
+.zoom-level {
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
 }
 
 /* MAIN */
@@ -205,11 +237,21 @@ body{
     color:#e2e8f0;
 }
 
+/* IFRAME & WRAPPER */
+
+.iframe-wrapper {
+    width: 100%;
+    height: calc(100vh - 60px);
+    overflow: auto; /* IMPORTANTE: Adiciona barra de rolagem quando aplicar zoom */
+    background: white;
+}
+
 iframe{
-    width:100%;
-    height:calc(100vh - 60px);
-    border:none;
-    background:white;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    transform-origin: top left;
 }
 
 .exit-tv{
@@ -230,7 +272,6 @@ iframe{
 
 <body>
 
-<!-- SPLASH -->
 <div id="splash">
     <div class="logo">
         NADIR<span>.</span>
@@ -245,7 +286,6 @@ iframe{
     </div>
 </div>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
 
     <div class="brand">
@@ -273,9 +313,22 @@ iframe{
         🔲 Tela Cheia
     </button>
 
+    <div class="section-title">
+        Visualização
+    </div>
+
+    <div class="zoom-container">
+        <button class="btn" onclick="changeZoom(-0.1)" title="Diminuir Zoom">➖</button>
+        <span class="zoom-level" id="zoomText">100%</span>
+        <button class="btn" onclick="changeZoom(0.1)" title="Aumentar Zoom">➕</button>
+    </div>
+
+    <button class="btn" onclick="resetZoom()" style="text-align: center;">
+        Reiniciar Zoom
+    </button>
+
 </div>
 
-<!-- MAIN -->
 <div class="main" id="main">
 
     <div class="topbar">
@@ -297,10 +350,12 @@ iframe{
 
     </div>
 
-    <iframe
-        id="dashboardFrame"
-        src="https://nadirfigueiredoind.sharepoint.com/sites/PCP/_layouts/15/Doc.aspx?sourcedoc={88ff873b-aade-4f04-950b-0956da67313d}&action=embedview&wdAllowInteractivity=False&Item='Dashboard%20MTG%20F%C3%A1brica'!A1%3AW46&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=False">
-    </iframe>
+    <div class="iframe-wrapper">
+        <iframe
+            id="dashboardFrame"
+            src="https://nadirfigueiredoind.sharepoint.com/sites/PCP/_layouts/15/Doc.aspx?sourcedoc={88ff873b-aade-4f04-950b-0956da67313d}&action=embedview&wdAllowInteractivity=False&Item='Dashboard%20MTG%20F%C3%A1brica'!A1%3AW46&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=False">
+        </iframe>
+    </div>
 
 </div>
 
@@ -313,12 +368,41 @@ iframe{
 const dashboardURL =
 "https://nadirfigueiredoind.sharepoint.com/sites/PCP/_layouts/15/Doc.aspx?sourcedoc={88ff873b-aade-4f04-950b-0956da67313d}&action=embedview&wdAllowInteractivity=False&Item='Dashboard%20MTG%20F%C3%A1brica'!A1%3AW46&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=False";
 
+// LÓGICA DE ZOOM
+let currentZoom = 1;
+
+function changeZoom(step) {
+    currentZoom += step;
+    
+    // Limites de zoom (50% a 300%)
+    if (currentZoom < 0.5) currentZoom = 0.5;
+    if (currentZoom > 3.0) currentZoom = 3.0;
+    
+    applyZoom();
+}
+
+function resetZoom() {
+    currentZoom = 1;
+    applyZoom();
+}
+
+function applyZoom() {
+    const frame = document.getElementById("dashboardFrame");
+    const zoomText = document.getElementById("zoomText");
+    
+    // Atualiza o texto na sidebar
+    zoomText.innerText = Math.round(currentZoom * 100) + "%";
+    
+    // Aplica o zoom nativamente (funciona na maioria dos navegadores modernos)
+    frame.style.zoom = currentZoom;
+}
+
+// FUNÇÕES DA PLANILHA E UI
 function loadDashboard(){
     document.getElementById("dashboardFrame").src = dashboardURL;
 }
 
 function refreshDashboard(){
-
     const frame = document.getElementById("dashboardFrame");
     const current = frame.src;
 
@@ -327,47 +411,33 @@ function refreshDashboard(){
     setTimeout(()=>{
         frame.src = current;
     },300);
-
 }
 
 function toggleTV(){
-
-    document.getElementById("sidebar")
-    .classList.toggle("hidden");
-
-    document.getElementById("main")
-    .classList.toggle("full");
+    document.getElementById("sidebar").classList.toggle("hidden");
+    document.getElementById("main").classList.toggle("full");
 
     document.getElementById("exitTV").style.display =
-    document.getElementById("sidebar")
-    .classList.contains("hidden")
+    document.getElementById("sidebar").classList.contains("hidden")
     ? "block"
     : "none";
 }
 
 function exitTV(){
-
-    document.getElementById("sidebar")
-    .classList.remove("hidden");
-
-    document.getElementById("main")
-    .classList.remove("full");
-
+    document.getElementById("sidebar").classList.remove("hidden");
+    document.getElementById("main").classList.remove("full");
     document.getElementById("exitTV").style.display = "none";
 }
 
 function toggleFullscreen(){
-
     if(!document.fullscreenElement){
         document.documentElement.requestFullscreen();
     }else{
         document.exitFullscreen();
     }
-
 }
 
 function updateClock(){
-
     document.getElementById("clock").innerText =
     new Date().toLocaleString("pt-BR");
 
@@ -375,28 +445,20 @@ function updateClock(){
     const text = document.getElementById("statusText");
 
     if(navigator.onLine){
-
         dot.className = "dot online";
         text.innerText = "ONLINE";
-
     }else{
-
         dot.className = "dot offline";
         text.innerText = "OFFLINE";
-
     }
-
 }
 
 setInterval(updateClock,1000);
 updateClock();
 
 window.onload = () => {
-
     setTimeout(()=>{
-
         const splash = document.getElementById("splash");
-
         splash.style.opacity = "0";
 
         setTimeout(()=>{
@@ -409,7 +471,6 @@ window.onload = () => {
     setTimeout(()=>{
         toggleTV();
     },4000);
-
 };
 
 // Atualiza a cada 5 minutos
@@ -417,21 +478,27 @@ setInterval(() => {
     refreshDashboard();
 }, 300000);
 
-// Atalhos
+// ATALHOS DE TECLADO
 document.addEventListener("keydown", e => {
-
     if(e.key === "Escape"){
         exitTV();
     }
-
     if(e.key.toLowerCase() === "f"){
         toggleFullscreen();
     }
-
     if(e.key.toLowerCase() === "r"){
         refreshDashboard();
     }
-
+    // Atalhos para zoom (+ e -)
+    if(e.key === "+" || e.key === "="){
+        changeZoom(0.1);
+    }
+    if(e.key === "-"){
+        changeZoom(-0.1);
+    }
+    if(e.key === "0"){
+        resetZoom();
+    }
 });
 
 </script>

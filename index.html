@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PCP Analytics | Dashboard Montagem</title>
+
+<style>
+:root{
+    --primary:#38bdf8;
+    --accent:#fb923c;
+    --bg:#020617;
+    --card:#0f172a;
+    --text:#f8fafc;
+    --success:#22c55e;
+    --danger:#ef4444;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Arial,sans-serif;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+    overflow:hidden;
+}
+
+/* SPLASH */
+
+#splash{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle,#0f172a,#020617);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:.8s;
+}
+
+.logo{
+    font-size:56px;
+    font-weight:800;
+}
+
+.logo span{
+    color:var(--accent);
+}
+
+.subtitle{
+    margin-top:10px;
+    color:#94a3b8;
+    letter-spacing:6px;
+    text-transform:uppercase;
+}
+
+.loader{
+    width:350px;
+    height:4px;
+    background:#1e293b;
+    border-radius:999px;
+    overflow:hidden;
+    margin-top:30px;
+}
+
+.loader-bar{
+    width:0;
+    height:100%;
+    background:var(--primary);
+    animation:loading 3s forwards;
+}
+
+@keyframes loading{
+    from{width:0;}
+    to{width:100%;}
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    width:220px;
+    height:100vh;
+    background:#020617;
+    border-right:1px solid #1e293b;
+    position:fixed;
+    left:0;
+    top:0;
+    padding:20px;
+    transition:.4s;
+    z-index:100;
+}
+
+.sidebar.hidden{
+    transform:translateX(-100%);
+}
+
+.brand{
+    font-size:30px;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.brand span{
+    color:var(--accent);
+}
+
+.section-title{
+    color:#cbd5e1;
+    font-size:14px;
+    margin-bottom:25px;
+    line-height:1.4;
+}
+
+.btn{
+    width:100%;
+    border:none;
+    padding:14px;
+    margin-bottom:10px;
+    border-radius:10px;
+    background:#1e293b;
+    color:white;
+    cursor:pointer;
+    transition:.3s;
+    text-align:left;
+}
+
+.btn:hover{
+    background:#2563eb;
+}
+
+.btn-primary{
+    background:var(--accent);
+    color:black;
+    font-weight:700;
+}
+
+/* MAIN */
+
+.main{
+    margin-left:220px;
+    height:100vh;
+    transition:.4s;
+}
+
+.main.full{
+    margin-left:0;
+}
+
+.topbar{
+    height:60px;
+    background:#020617;
+    border-bottom:1px solid #1e293b;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 20px;
+}
+
+.title{
+    color:var(--accent);
+    font-size:16px;
+    font-weight:700;
+}
+
+.right-area{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 12px;
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:30px;
+}
+
+.dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+}
+
+.online{
+    background:var(--success);
+    box-shadow:0 0 10px var(--success);
+}
+
+.offline{
+    background:var(--danger);
+    box-shadow:0 0 10px var(--danger);
+}
+
+.clock{
+    font-size:14px;
+    color:#e2e8f0;
+}
+
+iframe{
+    width:100%;
+    height:calc(100vh - 60px);
+    border:none;
+    background:white;
+}
+
+.exit-tv{
+    position:fixed;
+    top:15px;
+    right:15px;
+    z-index:999;
+    display:none;
+    padding:10px 16px;
+    border-radius:30px;
+    background:#020617;
+    border:1px solid var(--accent);
+    color:white;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+    <div class="logo">
+        NADIR<span>.</span>
+    </div>
+
+    <div class="subtitle">
+        PCP Analytics
+    </div>
+
+    <div class="loader">
+        <div class="loader-bar"></div>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+
+    <div class="brand">
+        N<span>.</span>
+    </div>
+
+    <div class="section-title">
+        Dashboard<br>
+        Montagem - PCP
+    </div>
+
+    <button class="btn btn-primary" onclick="loadDashboard()">
+        📊 Dashboard MTG
+    </button>
+
+    <button class="btn" onclick="refreshDashboard()">
+        🔄 Atualizar
+    </button>
+
+    <button class="btn" onclick="toggleTV()">
+        📺 Modo TV
+    </button>
+
+    <button class="btn" onclick="toggleFullscreen()">
+        🔲 Tela Cheia
+    </button>
+
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+    <div class="topbar">
+
+        <div class="title">
+            PCP Analytics | Dashboard Montagem
+        </div>
+
+        <div class="right-area">
+
+            <div class="status">
+                <div id="statusDot" class="dot online"></div>
+                <span id="statusText">ONLINE</span>
+            </div>
+
+            <div id="clock" class="clock"></div>
+
+        </div>
+
+    </div>
+
+    <iframe
+        id="dashboardFrame"
+        src="https://nadirfigueiredoind.sharepoint.com/sites/PCP/_layouts/15/Doc.aspx?sourcedoc={88ff873b-aade-4f04-950b-0956da67313d}&action=embedview&wdAllowInteractivity=False&Item='Dashboard%20MTG%20F%C3%A1brica'!A1%3AW46&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=False">
+    </iframe>
+
+</div>
+
+<div id="exitTV" class="exit-tv" onclick="exitTV()">
+    ⏏ Sair do Modo TV
+</div>
+
+<script>
+
+const dashboardURL =
+"https://nadirfigueiredoind.sharepoint.com/sites/PCP/_layouts/15/Doc.aspx?sourcedoc={88ff873b-aade-4f04-950b-0956da67313d}&action=embedview&wdAllowInteractivity=False&Item='Dashboard%20MTG%20F%C3%A1brica'!A1%3AW46&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=False";
+
+function loadDashboard(){
+    document.getElementById("dashboardFrame").src = dashboardURL;
+}
+
+function refreshDashboard(){
+
+    const frame = document.getElementById("dashboardFrame");
+    const current = frame.src;
+
+    frame.src = "";
+
+    setTimeout(()=>{
+        frame.src = current;
+    },300);
+
+}
+
+function toggleTV(){
+
+    document.getElementById("sidebar")
+    .classList.toggle("hidden");
+
+    document.getElementById("main")
+    .classList.toggle("full");
+
+    document.getElementById("exitTV").style.display =
+    document.getElementById("sidebar")
+    .classList.contains("hidden")
+    ? "block"
+    : "none";
+}
+
+function exitTV(){
+
+    document.getElementById("sidebar")
+    .classList.remove("hidden");
+
+    document.getElementById("main")
+    .classList.remove("full");
+
+    document.getElementById("exitTV").style.display = "none";
+}
+
+function toggleFullscreen(){
+
+    if(!document.fullscreenElement){
+        document.documentElement.requestFullscreen();
+    }else{
+        document.exitFullscreen();
+    }
+
+}
+
+function updateClock(){
+
+    document.getElementById("clock").innerText =
+    new Date().toLocaleString("pt-BR");
+
+    const dot = document.getElementById("statusDot");
+    const text = document.getElementById("statusText");
+
+    if(navigator.onLine){
+
+        dot.className = "dot online";
+        text.innerText = "ONLINE";
+
+    }else{
+
+        dot.className = "dot offline";
+        text.innerText = "OFFLINE";
+
+    }
+
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+window.onload = () => {
+
+    setTimeout(()=>{
+
+        const splash = document.getElementById("splash");
+
+        splash.style.opacity = "0";
+
+        setTimeout(()=>{
+            splash.style.display = "none";
+        },800);
+
+    },3000);
+
+    // entra automaticamente em modo TV
+    setTimeout(()=>{
+        toggleTV();
+    },4000);
+
+};
+
+// Atualiza a cada 5 minutos
+setInterval(() => {
+    refreshDashboard();
+}, 300000);
+
+// Atalhos
+document.addEventListener("keydown", e => {
+
+    if(e.key === "Escape"){
+        exitTV();
+    }
+
+    if(e.key.toLowerCase() === "f"){
+        toggleFullscreen();
+    }
+
+    if(e.key.toLowerCase() === "r"){
+        refreshDashboard();
+    }
+
+});
+
+</script>
+
+</body>
+</html>

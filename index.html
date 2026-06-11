@@ -31,7 +31,8 @@
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { 
             getAuth, 
-            signInWithEmailAndPassword 
+            signInWithEmailAndPassword,
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -50,6 +51,7 @@
         window.db = db;
         window.auth = auth;
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.onAuthStateChanged = onAuthStateChanged;
         window.db_collection = collection;
         window.db_addDoc = addDoc;
         window.db_onSnapshot = onSnapshot;
@@ -60,6 +62,12 @@
         window.db_where = where;
         window.db_orderBy = orderBy;
         window.db_limit = limit;
+
+        window.onAuthStateChanged(window.auth, (user) => {
+            if (user) {
+                configurarSessaoUsuario(user.email);
+            }
+        });
     </script>
 
     <style>
@@ -71,7 +79,7 @@
         }
 
         body{
-            background:#f1f5f9;
+            background:#f8fafc;
             color:#0f172a;
             overflow:hidden;
             position: relative;
@@ -189,7 +197,7 @@
         .login-box{
             width:100%;
             max-width:420px;
-        }
+            }
 
         .logo-login{
             width:80px;
@@ -226,23 +234,24 @@
             margin-bottom:8px;
             font-size:13px;
             font-weight:700;
-            color:#334155;
+            color:#475569;
         }
 
         .field input{
             width:100%;
             padding:15px 16px;
             border-radius:16px;
-            border:1px solid #dbe2ea;
+            border:1px solid #cbd5e1;
             background:#f8fafc;
             font-size:14px;
-            transition:0.2s;
+            transition: all 0.2s ease-in-out;
         }
 
         .field input:focus{
             outline:none;
             border-color:#2563eb;
             background:white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
         }
 
         .login-btn{
@@ -260,6 +269,7 @@
 
         .login-btn:hover:not(:disabled){
             transform:translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         .login-btn:disabled {
@@ -374,6 +384,11 @@
             color:white;
             font-weight:700;
             cursor:pointer;
+            transition: 0.2s;
+        }
+
+        .logout:hover {
+            background: #dc2626;
         }
 
         /* MAIN */
@@ -398,6 +413,7 @@
         .breadcrumb{
             font-size:14px;
             color:#64748b;
+            font-weight: 500;
         }
 
         .search-box{
@@ -418,6 +434,14 @@
             border-radius:16px;
             border:1px solid #e2e8f0;
             background:#f8fafc;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
         /* CONTENT */
@@ -442,15 +466,15 @@
             background:white;
             border-radius:22px;
             padding:20px;
-            box-shadow: 0 8px 30px rgba(15,23,42,0.06);
+            box-shadow: 0 4px 20px rgba(15,23,42,0.04);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
             border: 2px solid transparent;
         }
 
         .card:hover{
             transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(15,23,42,0.12);
+            box-shadow: 0 10px 30px rgba(15,23,42,0.08);
         }
 
         .card.active-filter {
@@ -500,7 +524,7 @@
             border-radius:28px;
             padding:28px;
             margin-bottom:24px;
-            box-shadow: 0 8px 30px rgba(15,23,42,0.06);
+            box-shadow: 0 4px 25px rgba(15,23,42,0.04);
         }
 
         .section-title{
@@ -522,16 +546,24 @@
             margin-bottom:8px;
             font-size:13px;
             font-weight:700;
-            color:#334155;
+            color:#475569;
         }
 
         input, textarea, select{
             width:100%;
             padding:14px 16px;
             border-radius:16px;
-            border:1px solid #dbe2ea;
+            border:1px solid #cbd5e1;
             background:#f8fafc;
             font-size:14px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
 
         input:read-only {
@@ -539,6 +571,7 @@
             color: #475569;
             font-weight: 600;
             cursor: not-allowed;
+            border-color: #cbd5e1;
         }
 
         textarea{
@@ -555,6 +588,12 @@
             color:white;
             font-weight:700;
             cursor:pointer;
+            transition: 0.2s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            transform: translateY(-1px);
         }
 
         .send-btn:disabled {
@@ -562,7 +601,7 @@
             cursor: not-allowed;
         }
 
-        /* SEÇÃO DE ITENS DINÂMICOS COMPACTA */
+        /* SEÇÃO DE ITENS DINÂMICOS */
         .sub-secao-itens {
             background: #f8fafc;
             border: 2px dashed #cbd5e1;
@@ -587,19 +626,18 @@
             background: #1e293b;
         }
 
-        /* CONTAINER PARA CORREÇÃO DE LARGURA DA TABELA DE ITENS */
         .tabela-itens-wrapper {
             width: 100%;
-            max-width: 680px; /* Alinha perfeitamente com o tamanho padrão dos cards/colunas triplas */
-            overflow-x: auto;
+            overflow-x: hidden;
             margin-top: 16px;
             border-radius: 16px;
             border: 1px solid #dbe2ea;
+            background: white;
         }
 
-        /* TABELA DE ITENS CORRIGIDA */
         .tabela-itens-provisorios {
-            width: 100%;
+            width: 100% !important;
+            min-width: 0px !important;
             border-collapse: collapse;
             background: white;
             table-layout: fixed;
@@ -648,7 +686,8 @@
             background:white;
             border-radius:28px;
             overflow:auto;
-            box-shadow: 0 8px 30px rgba(15,23,42,0.06);
+            box-shadow: 0 4px 25px rgba(15,23,42,0.04);
+            border: 1px solid #e2e8f0;
         }
 
         table{
@@ -661,21 +700,24 @@
             background:#f8fafc;
             padding:18px;
             font-size:12px;
-            color:#64748b;
+            color:#475569;
             font-weight:800;
-            border-bottom:1px solid #e2e8f0;
+            border-bottom:2px solid #e2e8f0;
         }
 
         td{
             padding:16px;
             font-size:13px;
-            border-bottom:1px solid #f1f5f9;
+            border-bottom:1px solid #e2e8f0;
             text-align:center;
         }
 
-        tr:hover{ background:#f8fafc; }
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
 
-        /* PAGINAÇÃO BUTTON */
+        tbody tr:hover{ background:#f1f5f9 !important; }
+
         .paginacao-container {
             display: flex;
             justify-content: center;
@@ -741,7 +783,10 @@
             color:white;
             font-weight:700;
             cursor:pointer;
+            transition: 0.2s;
         }
+
+        .action-btn:hover { background: #1d4ed8; }
 
         .delete-btn {
             padding: 10px 14px;
@@ -752,13 +797,17 @@
             font-weight: 700;
             cursor: pointer;
             margin-left: 5px;
+            transition: 0.2s;
         }
+
+        .delete-btn:hover { background: #dc2626; }
 
         /* MODAL */
         .modal{
             position:fixed;
             inset:0;
-            background:rgba(15,23,42,0.5);
+            background:rgba(15,23,42,0.6);
+            backdrop-filter: blur(4px);
             display:none;
             justify-content:flex-end;
             z-index: 999;
@@ -770,6 +819,7 @@
             background:white;
             padding:28px;
             overflow:auto;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.15);
         }
 
         .modal-title{
@@ -788,7 +838,10 @@
             color:white;
             font-weight:700;
             cursor:pointer;
+            transition: 0.2s;
         }
+
+        .save-btn:hover { box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2); }
 
         .hidden{ display:none; }
 
@@ -1013,8 +1066,8 @@
                                 <table class="tabela-itens-provisorios">
                                     <thead>
                                         <tr>
-                                            <th style="width: 45%;">Item</th>
-                                            <th style="width: 25%;">Quantidade</th>
+                                            <th style="width: 40%;">Item (Código)</th>
+                                            <th style="width: 30%;">Quantidade</th>
                                             <th style="width: 30%;">Pedido</th>
                                         </tr>
                                     </thead>
@@ -1133,6 +1186,7 @@
             <div class="field">
                 <label class="field-label">STATUS</label>
                 <select id="novoStatus">
+                    <option value="PENDENTE">PENDENTE</option>
                     <option value="FINALIZADO">FINALIZADO</option>
                     <option value="AGUARDANDO">AGUARDANDO</option>
                     <option value="PENDÊNCIA">PENDÊNCIA</option>
@@ -1150,7 +1204,7 @@
         let solicitacaoSelecionadaId = null; 
         let filtroMesAtual = "";
         let filtroStatusAtual = "TODOS";
-        let limiteRegistros = 50;
+        let limiteRegistros = 100;
         let unsubscribeRealtime = null;
 
         /* TRAVA DATAS RETROATIVAS */
@@ -1205,7 +1259,7 @@
             const numPedido = document.getElementById("numeroPedido").value.trim();
 
             if(!numPedido) {
-                alert("Por favor, digite o NÚMERO DO PEDIDO acima antes de adicionar itens.");
+                alert("Por favor, digite o NÚMERO DO PEDIDO antes de adicionar itens na lista.");
                 return;
             }
 
@@ -1236,7 +1290,6 @@
                 numeroPedido: numPedido
             });
 
-            // Limpa apenas campos internos do item
             document.getElementById("itemCod").value = "";
             document.getElementById("itemQuantidade").value = "";
             document.getElementById("itemPrevisaoEntrega").value = "";
@@ -1251,7 +1304,6 @@
             renderListaItensProvisorios();
         }
 
-        /* RENDERIZAÇÃO DA TABELA ULTRA COMPACTA */
         function renderListaItensProvisorios() {
             const tbody = document.getElementById("listaItensProvisorios");
             if(itensDoPedidoAtual.length === 0) {
@@ -1271,6 +1323,31 @@
             });
         }
 
+        /* PERFIL OPERACIONAL */
+        function configurarSessaoUsuario(email) {
+            emailAutenticado = email.trim().toLowerCase();
+
+            if(emailAutenticado === "programacaomto@vendedor.com" || emailAutenticado.includes("vendedor")){
+                usuarioAtual = "Vendedor/Comercial";
+            } else if(emailAutenticado === "atendimento@pcp.com"){
+                usuarioAtual = "Atendimento-PCP"; 
+            } else {
+                usuarioAtual = emailAutenticado.split('@')[0];
+            }
+
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("app").style.display = "flex";
+            document.getElementById("usuarioLogado").innerText = usuarioAtual;
+
+            if(emailAutenticado === "programacaomto@vendedor.com" || emailAutenticado.includes("vendedor")){
+                document.getElementById("formSolicitante").classList.remove("hidden");
+                configuringDataSolicitacaoAutomatica();
+                aplicarBloqueioDatasRetroativas();
+            }
+
+            inicializarOuvinteFirebase();
+        }
+
         async function login(){
             const email = document.getElementById("usuario").value.trim().toLowerCase();
             const senha = document.getElementById("senha").value;
@@ -1286,28 +1363,6 @@
 
             try {
                 await window.signInWithEmailAndPassword(window.auth, email, senha);
-                emailAutenticado = email;
-
-                if(email === "programacaomto@vendedor.com"){
-                    usuarioAtual = "Vendedor/Comercial";
-                } else if(email === "atendimento@pcp.com"){
-                    usuarioAtual = "Atendimento-PCP"; 
-                } else {
-                    usuarioAtual = email.split('@')[0];
-                }
-
-                document.getElementById("loginScreen").style.display = "none";
-                document.getElementById("app").style.display = "flex";
-                document.getElementById("usuarioLogado").innerText = usuarioAtual;
-
-                if(email === "programacaomto@vendedor.com"){
-                    document.getElementById("formSolicitante").classList.remove("hidden");
-                    configuringDataSolicitacaoAutomatica();
-                    aplicarBloqueioDatasRetroativas();
-                }
-
-                inicializarOuvinteFirebase();
-
             } catch (error) {
                 console.error("Erro na autenticação:", error);
                 alert("Credenciais inválidas ou erro de rede.");
@@ -1317,7 +1372,9 @@
         }
 
         function logout(){
-            location.reload();
+            window.auth.signOut().then(() => {
+                location.reload();
+            });
         }
 
         function abrirPagina(id,btn){
@@ -1327,7 +1384,7 @@
             btn.classList.add("active");
         }
 
-        /* CONEXÃO FIRESTORE COM PAGINAÇÃO DINÂMICA */
+        /* CONEXÃO REAL-TIME FIRESTORE (CORRIGIDO PARA EVITAR ERRO DE ÍNDICE COMPOSTO) */
         function inicializarOuvinteFirebase() {
             if(!window.db) {
                 setTimeout(inicializarOuvinteFirebase, 500);
@@ -1336,21 +1393,13 @@
 
             if(unsubscribeRealtime) unsubscribeRealtime();
 
-            let q;
-            if (emailAutenticado === "atendimento@pcp.com") {
-                q = window.db_query(
-                    window.db_collection(window.db, "solicitacoes"),
-                    window.db_orderBy("id", "desc"),
-                    window.db_limit(limiteRegistros)
-                );
-            } else {
-                q = window.db_query(
-                    window.db_collection(window.db, "solicitacoes"), 
-                    window.db_where("remetenteEmail", "==", emailAutenticado),
-                    window.db_orderBy("id", "desc"),
-                    window.db_limit(limiteRegistros)
-                );
-            }
+            // Traz os dados ordenados por ID de forma global. 
+            // A restrição por vendedor agora roda direto na renderTabela() para não travar o app por falta de Índice no Firebase Console.
+            let q = window.db_query(
+                window.db_collection(window.db, "solicitacoes"),
+                window.db_orderBy("id", "desc"),
+                window.db_limit(limiteRegistros)
+            );
             
             unsubscribeRealtime = window.db_onSnapshot(q, (querySnapshot) => {
                 solicitacoes = [];
@@ -1370,20 +1419,19 @@
             inicializarOuvinteFirebase();
         }
 
-        /* ENVIO DE MULTI-ITENS PARA O FIREBASE (CORRIGIDO ID DO INPUT) */
+        /* ENVIO DE MULTI-ITENS COM RE-SINCRONIZAÇÃO FORÇADA */
         async function enviarSolicitacaoMultiiens(){
             const vendedor = document.getElementById("vendedorNome").value.trim();
             const mercadoValor = document.getElementById("mercadoSolicitante").value;
             const cli = document.getElementById("cliente").value.trim();
-            const numPedido = document.getElementById("numeroPedido").value.trim(); 
+            const btn = document.getElementById("btnEnviarSol");
             const dataSol = document.getElementById("dataSolicitacao").value;
             const obs = document.getElementById("observacao").value;
             const dest = document.getElementById("destinatario").value;
-            const btn = document.getElementById("btnEnviarSol");
 
             if(!vendedor) { alert("O preenchimento do campo VENDEDOR é obrigatório."); return; }
-            if(!cli || !numPedido) { alert("Os campos CLIENTE e NÚMERO DO PEDIDO são obrigatórios."); return; }
-            if(itensDoPedidoAtual.length === 0) { alert("Você deve adicionar pelo menos 1 item na lista antes de enviar o pedido."); return; }
+            if(!cli) { alert("O campo CLIENTE é obrigatório."); return; }
+            if(itensDoPedidoAtual.length === 0) { alert("Você deve adicionar pelo menos 1 item na lista antes de enviar."); return; }
 
             btn.disabled = true;
             btn.innerText = "ENVIANDO PEDIDO...";
@@ -1408,11 +1456,11 @@
                         responsavelPcp: "-",
                         cliente: cli,
                         codItem: item.codItem,
-                        numeroPedido: numPedido, 
+                        numeroPedido: item.numeroPedido || "-", 
                         quantidade: item.quantidade,
                         observacao: obs,
-                        remetenteEmail: emailAutenticado,
-                        destinatario: dest,
+                        remetenteEmail: emailAutenticado, 
+                        destinatario: dest.trim().toLowerCase(),
                         status: "PENDENTE",
                         resposta: "",
                         logAuditoria: ""
@@ -1423,13 +1471,14 @@
 
                 alert("Pedido completo enviado com sucesso! " + itensDoPedidoAtual.length + " itens cadastrados.");
                 
-                // Limpeza geral do formulário
                 document.getElementById("cliente").value = "";
                 document.getElementById("numeroPedido").value = ""; 
                 document.getElementById("observacao").value = "";
+                
                 itensDoPedidoAtual = [];
                 renderListaItensProvisorios();
                 configuringDataSolicitacaoAutomatica();
+                inicializarOuvinteFirebase();
 
             } catch (error) {
                 console.error(error);
@@ -1464,13 +1513,19 @@
             renderTabela();
         }
 
-        /* RENDERIZAÇÃO CENTRAL DA TABELA */
+        /* RENDERIZAÇÃO DA TABELA (COM FILTRO SEGURO POR PERFIL DE USUÁRIO) */
         function renderTabela(){
             const tabela = document.getElementById("tabelaSolicitacoes");
             const busca = document.getElementById("inputBusca").value.toLowerCase().trim();
             tabela.innerHTML = "";
 
-            let filtradas = solicitacoes.filter(item => {
+            // REVISÃO DE SEGURANÇA LOCAL: Filtra registros por vendedor na aplicação caso não seja administrador/PCP
+            let baseDados = solicitacoes;
+            if (emailAutenticado !== "atendimento@pcp.com") {
+                baseDados = solicitacoes.filter(item => item.remetenteEmail === emailAutenticado);
+            }
+
+            let filtradas = baseDados.filter(item => {
                 if(filtroStatusAtual !== "TODOS" && item.status !== filtroStatusAtual) return false;
 
                 if(filtroMesAtual && item.dataSolicitacao){
@@ -1486,7 +1541,7 @@
                     const matchCodigo = item.codItem && item.codItem.toLowerCase().includes(busca);
                     const matchVendedor = item.vendedor && item.vendedor.toLowerCase().includes(busca);
                     const matchMercado = item.mercadoSolicitante && item.mercadoSolicitante.toLowerCase().includes(busca);
-                    const matchPedido = item.numeroPedido && item.numeroPedido.toLowerCase().includes(busca);
+                    const matchPedido = item.numeroPedido && String(item.numeroPedido).toLowerCase().includes(busca);
                     return matchCliente || matchCodigo || matchVendedor || matchMercado || matchPedido;
                 }
 
@@ -1496,7 +1551,7 @@
             filtradas.forEach(item => {
                 let botoesAcao = '-';
                 if(emailAutenticado === "atendimento@pcp.com") {
-                    let btnResponder = item.status !== "FINALIZADO" ? `<button class="action-btn" onclick="abrirModal('${item.docId}')">RESPONDER</button>` : '';
+                    let btnResponder = `<button class="action-btn" onclick="abrirModal('${item.docId}')">RESPONDER</button>`;
                     let btnExcluir = `<button class="delete-btn" onclick="deletarSolicitacao('${item.docId}')"><i class="fa-solid fa-trash"></i></button>`;
                     botoesAcao = btnResponder + btnExcluir;
                 }
@@ -1507,21 +1562,21 @@
                     <td><strong>${item.tipoMaterial || "MTO"}</strong></td>
                     <td><span style="color:#475569; font-weight:600;">${item.mercadoSolicitante || "-"}</span></td>
                     <td><span style="color:#1e40af; font-weight:600;">${item.vendedor || "-"}</span></td>
-                    <td>${item.dataSolicitacao}</td>
-                    <td>${item.dataCliente}</td>
+                    <td>${item.dataSolicitacao || "-"}</td>
+                    <td>${item.dataCliente || "-"}</td>
                     <td style="color:#1d4ed8; font-weight:700; background:#eff6ff;">${item.dataPrevista || "-"}</td>
                     <td style="color:#0ea5e9; font-weight:700;">${item.dataDesejavel || "-"}</td>
-                    <td>${item.dataAtendimento}</td>
-                    <td>${item.dataProducao}</td>
-                    <td>${item.dataRetornoPcp}</td>
+                    <td>${item.dataAtendimento || "-"}</td>
+                    <td>${item.dataProducao || "-"}</td>
+                    <td>${item.dataRetornoPcp || "-"}</td>
                     <td><span style="font-weight:600; color:#475569;">${item.areaPcp || "-"}</span></td>
                     <td><strong>${item.responsavelPcp || "-"}</strong></td>
-                    <td>${item.cliente}</td>
-                    <td>${item.codItem}</td>
+                    <td>${item.cliente || "-"}</td>
+                    <td>${item.codItem || "-"}</td>
                     <td style="font-weight:600; color:#334155;">${item.numeroPedido || "-"}</td>
-                    <td>${item.quantidade}</td>
+                    <td>${item.quantidade || 0}</td>
                     <td>
-                        <div style="text-align:left;">${item.observacao}</div>
+                        <div style="text-align:left;">${item.observacao || ""}</div>
                         ${item.resposta ? `<div class="response"><b>RETORNO PCP:</b><br>${item.resposta}</div>` : ''}
                         ${item.logAuditoria ? `<div class="log-auditoria"><i class="fa-solid fa-clock-rotate-left"></i> ${item.logAuditoria}</div>` : ''}
                     </td>
@@ -1531,22 +1586,22 @@
                             item.status === 'AGUARDANDO' ? 'aguardando' :
                             item.status === 'PENDÊNCIA' ? 'pendencia' : 'pendente'
                         }">
-                            ${item.status}
+                            ${item.status || 'PENDENTE'}
                         </span>
                     </td>
                     <td>${botoesAcao}</td>
                 </tr>`;
             });
 
-            atualizarKPIs();
+            atualizarKPIs(baseDados);
         }
 
-        function atualizarKPIs(){
-            document.getElementById("kpiTotal").innerText = solicitacoes.length;
-            document.getElementById("kpiPendentes").innerText = solicitacoes.filter(x => x.status === "PENDENTE").length;
-            document.getElementById("kpiFinalizados").innerText = solicitacoes.filter(x => x.status === "FINALIZADO").length;
-            document.getElementById("kpiAguardando").innerText = solicitacoes.filter(x => x.status === "AGUARDANDO").length;
-            document.getElementById("kpiPendencias").innerText = solicitacoes.filter(x => x.status === "PENDÊNCIA").length;
+        function atualizarKPIs(dadosDoPerfil){
+            document.getElementById("kpiTotal").innerText = dadosDoPerfil.length;
+            document.getElementById("kpiPendentes").innerText = dadosDoPerfil.filter(x => x.status === "PENDENTE").length;
+            document.getElementById("kpiFinalizados").innerText = dadosDoPerfil.filter(x => x.status === "FINALIZADO").length;
+            document.getElementById("kpiAguardando").innerText = dadosDoPerfil.filter(x => x.status === "AGUARDANDO").length;
+            document.getElementById("kpiPendencias").innerText = dadosDoPerfil.filter(x => x.status === "PENDÊNCIA").length;
         }
 
         async function deletarSolicitacao(docId) {
@@ -1559,7 +1614,7 @@
             }
         }
 
-        /* MODAL RESPOSTA (PCP) */
+        /* MODAL RESPOSTA (SALVAMENTO ISOLADO DE CAMPOS) */
         function abrirModal(docId){
             solicitacaoSelecionadaId = docId;
             const item = solicitacoes.find(x => x.docId === docId);
@@ -1608,8 +1663,10 @@
                     logAuditoria: timestampLog
                 });
                 document.getElementById("modalResposta").style.display = "none";
-                alert("Retorno atualizado com sucesso!");
+                alert("Retorno atualizado!");
+                inicializarOuvinteFirebase();
             } catch (error) {
+                console.error("Erro ao salvar retorno:", error);
                 alert("Erro ao salvar retorno.");
             } finally {
                 btn.disabled = false;

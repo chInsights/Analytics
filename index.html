@@ -610,6 +610,13 @@
             margin-top: 24px;
         }
 
+        .botoes-acoes-itens {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
         .btn-adicionar-item {
             background: #020617;
             color: white;
@@ -618,12 +625,29 @@
             border-radius: 12px;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 10px;
             transition: 0.2s;
         }
 
         .btn-adicionar-item:hover {
             background: #1e293b;
+        }
+
+        .btn-importar-excel {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-importar-excel:hover {
+            background: #15803d;
         }
 
         .tabela-itens-wrapper {
@@ -679,6 +703,7 @@
             gap:12px;
             margin-bottom:22px;
             flex-wrap:wrap;
+            align-items: center;
         }
 
         /* TABLE */
@@ -693,7 +718,7 @@
         table{
             width:100%;
             border-collapse:collapse;
-            min-width:2600px;
+            min-width:2650px;
         }
 
         th{
@@ -801,6 +826,36 @@
         }
 
         .delete-btn:hover { background: #dc2626; }
+
+        .btn-massa {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-massa:hover {
+            background: #7c3aed;
+        }
+
+        /* CUSTOM CHECKBOX STYLE */
+        .col-checkbox {
+            width: 50px;
+            text-align: center;
+        }
+
+        .chk-solicitacao {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
 
         /* MODAL */
         .modal{
@@ -1060,7 +1115,14 @@
                                     <input type="date" id="itemDataDesejavel">
                                 </div>
                             </div>
-                            <button type="button" class="btn-adicionar-item" onclick="adicionarItemNaLista()">＋ Adicionar Item na Lista</button>
+                            
+                            <div class="botoes-acoes-itens">
+                                <button type="button" class="btn-adicionar-item" onclick="adicionarItemNaLista()">＋ Adicionar Item na Lista</button>
+                                <button type="button" class="btn-importar-excel" onclick="document.getElementById('inputExcelItem').click()">
+                                    <i class="fa-solid fa-file-excel"></i> Importar Itens da Planilha
+                                </button>
+                                <input type="file" id="inputExcelItem" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importarItensDoExcel(event)">
+                            </div>
 
                             <div class="tabela-itens-wrapper">
                                 <table class="tabela-itens-provisorios">
@@ -1094,12 +1156,17 @@
                         <input type="month" id="filtroMes" style="max-width:220px;">
                         <button class="send-btn" style="margin-top:0;" onclick="filtrarMes()">FILTRAR</button>
                         <button class="logout" style="width:auto; margin-top:0; background:#64748b;" onclick="limparFiltro()">LIMPAR MÊS</button>
+                        
+                        <button id="btnRespostaMassa" class="btn-massa hidden" onclick="abrirModalMassa()">
+                            <i class="fa-solid fa-layer-group"></i> Responder Selecionados
+                        </button>
                     </div>
 
                     <div class="table-box">
                         <table id="tabelaMtoHTML">
                             <thead>
                                 <tr>
+                                    <th class="col-checkbox id-pcp-view hidden"><input type="checkbox" id="chkSelecionarTodos" class="chk-solicitacao" onclick="toggleSelecionarTodos(this)"></th>
                                     <th>ID</th>
                                     <th>TIPO</th>
                                     <th>MERCADO</th>
@@ -1159,7 +1226,7 @@
 
     <div class="modal" id="modalResposta">
         <div class="modal-content">
-            <div class="modal-title">Responder Solicitação</div>
+            <div class="modal-title" id="modalTituloGeral">Responder Solicitação</div>
             <div class="field">
                 <label class="field-label">RESPONSÁVEL PELO RETORNO *</label>
                 <input type="text" id="responsavelPcp" placeholder="Seu nome completo...">
@@ -1201,7 +1268,7 @@
         let emailAutenticado = "";
         let solicitacoes = [];
         let itensDoPedidoAtual = []; 
-        let solicitacaoSelecionadaId = null; 
+        let solicitacoesSelecionadasIds = []; 
         let filtroMesAtual = "";
         let filtroStatusAtual = "TODOS";
         let limiteRegistros = 100;
@@ -1237,15 +1304,91 @@
                 return;
             }
 
+            return calcularPrevisaoEspecifica(tipoMaterial, quantidade);
+        }
+
+        function calcularPrevisaoEspecifica(tipoMaterial, quantidade) {
+            if (!quantidade || quantidade <= 0) return "-";
             const dataCalculo = new Date();
-            const diasAdicionais = (tipoMaterial === "MTO") ? 12 : 17;
+            const diasAdicionais = (tipoMaterial === "MTO" || tipoMaterial === "mto") ? 12 : 17;
             dataCalculo.setDate(dataCalculo.getDate() + diasAdicionais);
 
             const dia = String(dataCalculo.getDate()).padStart(2, '0');
             const mes = String(dataCalculo.getMonth() + 1).padStart(2, '0');
             const ano = dataCalculo.getFullYear();
 
-            campoPrevisao.value = `${dia}/${mes}/${ano}`;
+            const resultado = `${dia}/${mes}/${ano}`;
+            const campoPrevisao = document.getElementById("itemPrevisaoEntrega");
+            if(campoPrevisao && !document.getElementById("inputExcelItem").files.length) {
+                campoPrevisao.value = resultado;
+            }
+            return resultado;
+        }
+
+        /* IMPORTAÇÃO DE ITENS VIA EXCEL */
+        function importarItensDoExcel(event) {
+            const arquivo = event.target.files[0];
+            const cli = document.getElementById("cliente").value.trim();
+            const numPedido = document.getElementById("numeroPedido").value.trim();
+
+            if (!cli || !numPedido) {
+                alert("Por favor, preencha os campos CLIENTE e NÚMERO DO PEDIDO antes de importar a planilha.");
+                event.target.value = "";
+                return;
+            }
+
+            if (!arquivo) return;
+
+            const leitor = new FileReader();
+            leitor.onload = function(e) {
+                try {
+                    const dadosBinarios = e.target.result;
+                    const livroExcel = XLSX.read(dadosBinarios, { type: 'binary' });
+                    const primeiraAba = livroExcel.SheetNames[0];
+                    const planilha = livroExcel.Sheets[primeiraAba];
+                    
+                    const linhas = XLSX.utils.sheet_to_json(planilha);
+
+                    if (linhas.length === 0) {
+                        alert("A planilha importada está vazia.");
+                        return;
+                    }
+
+                    let itensAdicionadosContador = 0;
+
+                    linhas.forEach(linha => {
+                        const cod = String(linha["Item"] || linha["Item (Código)"] || linha["Código"] || linha["codigo"] || linha["item"] || "").trim();
+                        const qtd = Number(linha["Quantidade"] || linha["Qtd"] || linha["quantidade"] || linha["qtd"] || 0);
+                        const tipo = "MTO"; 
+
+                        if (cod && qtd > 0) {
+                            const prevCalculada = calcularPrevisaoEspecifica(tipo, qtd);
+
+                            itensDoPedidoAtual.push({
+                                codItem: cod,
+                                tipoMaterial: tipo,
+                                quantidade: qtd,
+                                dataPrevista: prevCalculada,
+                                dataCliente: "-",
+                                dataDesejavel: "-",
+                                numeroPedido: numPedido 
+                            });
+                            itensAdicionadosContador++;
+                        }
+                    });
+
+                    renderListaItensProvisorios();
+                    alert(`Sucesso! ${itensAdicionadosContador} itens foram importados e associados ao Cliente "${cli}" e Pedido "${numPedido}".`);
+
+                } catch (erro) {
+                    console.error(erro);
+                    alert("Erro ao ler o arquivo Excel. Certifique-se de que a planilha possui as colunas 'Item' e 'Quantidade'.");
+                } finally {
+                    event.target.value = ""; 
+                }
+            };
+
+            leitor.readAsBinaryString(arquivo);
         }
 
         /* OPERAÇÃO DA LISTA DE ITENS PROVISÓRIOS */
@@ -1331,6 +1474,8 @@
                 usuarioAtual = "Vendedor/Comercial";
             } else if(emailAutenticado === "atendimento@pcp.com"){
                 usuarioAtual = "Atendimento-PCP"; 
+                document.getElementById("btnRespostaMassa").classList.remove("hidden");
+                document.querySelectorAll(".id-pcp-view").forEach(el => el.classList.remove("hidden"));
             } else {
                 usuarioAtual = emailAutenticado.split('@')[0];
             }
@@ -1384,7 +1529,7 @@
             btn.classList.add("active");
         }
 
-        /* CONEXÃO REAL-TIME FIRESTORE (CORRIGIDO PARA EVITAR ERRO DE ÍNDICE COMPOSTO) */
+        /* CONEXÃO REAL-TIME FIRESTORE */
         function inicializarOuvinteFirebase() {
             if(!window.db) {
                 setTimeout(inicializarOuvinteFirebase, 500);
@@ -1393,8 +1538,6 @@
 
             if(unsubscribeRealtime) unsubscribeRealtime();
 
-            // Traz os dados ordenados por ID de forma global. 
-            // A restrição por vendedor agora roda direto na renderTabela() para não travar o app por falta de Índice no Firebase Console.
             let q = window.db_query(
                 window.db_collection(window.db, "solicitacoes"),
                 window.db_orderBy("id", "desc"),
@@ -1419,7 +1562,7 @@
             inicializarOuvinteFirebase();
         }
 
-        /* ENVIO DE MULTI-ITENS COM RE-SINCRONIZAÇÃO FORÇADA */
+        /* ENVIO DE MULTI-ITENS */
         async function enviarSolicitacaoMultiiens(){
             const vendedor = document.getElementById("vendedorNome").value.trim();
             const mercadoValor = document.getElementById("mercadoSolicitante").value;
@@ -1431,7 +1574,7 @@
 
             if(!vendedor) { alert("O preenchimento do campo VENDEDOR é obrigatório."); return; }
             if(!cli) { alert("O campo CLIENTE é obrigatório."); return; }
-            if(itensDoPedidoAtual.length === 0) { alert("Você deve adicionar pelo menos 1 item na lista antes de enviar."); return; }
+            if(itensDoPedidoAtual.length === 0) { alert("Você deve adicionar ou importar pelo menos 1 item na lista antes de enviar."); return; }
 
             btn.disabled = true;
             btn.innerText = "ENVIANDO PEDIDO...";
@@ -1513,13 +1656,38 @@
             renderTabela();
         }
 
-        /* RENDERIZAÇÃO DA TABELA (COM FILTRO SEGURO POR PERFIL DE USUÁRIO) */
+        /* SELEÇÃO EM MASSA (CHECKBOXES) */
+        function toggleSelecionarTodos(master) {
+            const checkboxes = document.querySelectorAll(".chk-solicitacao-item");
+            checkboxes.forEach(chk => {
+                chk.checked = master.checked;
+                atualizarArraySelecao(chk.value, master.checked);
+            });
+        }
+
+        function gerenciarSelecaoItem(chk) {
+            atualizarArraySelecao(chk.value, chk.checked);
+            if(!chk.checked) {
+                document.getElementById("chkSelecionarTodos").checked = false;
+            }
+        }
+
+        function atualizarArraySelecao(id, adicionar) {
+            if(adicionar) {
+                if(!solicitacoesSelecionadasIds.includes(id)) {
+                    solicitacoesSelecionadasIds.push(id);
+                }
+            } else {
+                solicitacoesSelecionadasIds = solicitacoesSelecionadasIds.filter(x => x !== id);
+            }
+        }
+
+        /* RENDERIZAÇÃO DA TABELA */
         function renderTabela(){
             const tabela = document.getElementById("tabelaSolicitacoes");
             const busca = document.getElementById("inputBusca").value.toLowerCase().trim();
             tabela.innerHTML = "";
 
-            // REVISÃO DE SEGURANÇA LOCAL: Filtra registros por vendedor na aplicação caso não seja administrador/PCP
             let baseDados = solicitacoes;
             if (emailAutenticado !== "atendimento@pcp.com") {
                 baseDados = solicitacoes.filter(item => item.remetenteEmail === emailAutenticado);
@@ -1550,14 +1718,24 @@
 
             filtradas.forEach(item => {
                 let botoesAcao = '-';
+                let tdCheckbox = '';
+
+                // Verifica se este item já estava marcado antes para manter o checkbox ativo
+                let isChecked = solicitacoesSelecionadasIds.includes(item.docId) ? 'checked' : '';
+
                 if(emailAutenticado === "atendimento@pcp.com") {
                     let btnResponder = `<button class="action-btn" onclick="abrirModal('${item.docId}')">RESPONDER</button>`;
                     let btnExcluir = `<button class="delete-btn" onclick="deletarSolicitacao('${item.docId}')"><i class="fa-solid fa-trash"></i></button>`;
                     botoesAcao = btnResponder + btnExcluir;
+
+                    tdCheckbox = `<td class="col-checkbox"><input type="checkbox" value="${item.docId}" ${isChecked} class="chk-solicitacao-item chk-solicitacao" onclick="gerenciarSelecaoItem(this)"></td>`;
+                } else {
+                    tdCheckbox = `<td class="col-checkbox id-pcp-view hidden"></td>`;
                 }
 
                 tabela.innerHTML += `
                 <tr>
+                    ${tdCheckbox}
                     <td>${item.id}</td>
                     <td><strong>${item.tipoMaterial || "MTO"}</strong></td>
                     <td><span style="color:#475569; font-weight:600;">${item.mercadoSolicitante || "-"}</span></td>
@@ -1614,11 +1792,12 @@
             }
         }
 
-        /* MODAL RESPOSTA (SALVAMENTO ISOLADO DE CAMPOS) */
+        /* OPERAÇÃO DO MODAL DE RESPOSTA */
         function abrirModal(docId){
-            solicitacaoSelecionadaId = docId;
+            solicitacoesSelecionadasIds = [docId];
             const item = solicitacoes.find(x => x.docId === docId);
 
+            document.getElementById("modalTituloGeral").innerText = "Responder Solicitação";
             document.getElementById("responsavelPcp").value = item.responsavelPcp !== "-" ? item.responsavelPcp : "";
             document.getElementById("areaPcp").value = item.areaPcp !== "-" ? item.areaPcp : "Montagem";
             document.getElementById("respostaTexto").value = item.resposta || "";
@@ -1629,13 +1808,47 @@
             document.getElementById("modalResposta").style.display = "flex";
         }
 
+        function abrirModalMassa() {
+            // Varre a tela buscando elementos marcados e atualiza a lista definitiva
+            const marcadosNaTela = document.querySelectorAll(".chk-solicitacao-item:checked");
+            if (marcadosNaTela.length > 0) {
+                solicitacoesSelecionadasIds = Array.from(marcadosNaTela).map(chk => chk.value);
+            }
+
+            if(solicitacoesSelecionadasIds.length === 0) {
+                alert("Por favor, selecione pelo menos uma linha na tabela marcando a caixa de seleção.");
+                return;
+            }
+
+            document.getElementById("modalTituloGeral").innerText = `Responder ${solicitacoesSelecionadasIds.length} Itens Selecionados`;
+            document.getElementById("responsavelPcp").value = "";
+            document.getElementById("areaPcp").value = "Montagem";
+            document.getElementById("respostaTexto").value = "";
+            document.getElementById("dataProducao").value = "";
+            document.getElementById("dataRetornoPcp").value = "";
+            document.getElementById("novoStatus").value = "PENDENTE";
+
+            document.getElementById("modalResposta").style.display = "flex";
+        }
+
         window.onclick = function(e) {
             const m = document.getElementById("modalResposta");
             if (e.target == m) m.style.display = "none";
         }
 
+        /* ATUALIZAÇÃO EM MASSA FIXADA */
         async function salvarResposta(){
-            if(!solicitacaoSelecionadaId) return;
+            // Garante a varredura atualizada dos elementos marcados em tela no exato clique do botão
+            const marcadosNaTela = document.querySelectorAll(".chk-solicitacao-item:checked");
+            if (marcadosNaTela.length > 0) {
+                solicitacoesSelecionadasIds = Array.from(marcadosNaTela).map(chk => chk.value);
+            }
+
+            if(solicitacoesSelecionadasIds.length === 0) {
+                alert("Nenhum item selecionado para salvar.");
+                return;
+            }
+            
             const respPcp = document.getElementById("responsavelPcp").value.trim();
             const areaDesignada = document.getElementById("areaPcp").value;
             const txtResposta = document.getElementById("respostaTexto").value;
@@ -1647,27 +1860,37 @@
 
             const btn = document.getElementById("btnSalvarResposta");
             btn.disabled = true;
+            btn.innerText = "ATUALIZANDO BANCO...";
 
             const agora = new Date();
             const timestampLog = `Modificado por ${emailAutenticado} em ${agora.toLocaleDateString("pt-BR")} às ${agora.toLocaleTimeString("pt-BR")}`;
 
             try {
-                await window.db_updateDoc(window.db_doc(window.db, "solicitacoes", solicitacaoSelecionadaId), {
-                    responsavelPcp: respPcp,
-                    areaPcp: areaDesignada,
-                    resposta: txtResposta,
-                    dataProducao: dtProd,
-                    dataRetornoPcp: dtRetPcp,
-                    status: nStatus,
-                    dataAtendimento: agora.toLocaleDateString("pt-BR"),
-                    logAuditoria: timestampLog
-                });
+                // Loop assíncrono garantido sobre todas as chaves mapeadas
+                for(let i = 0; i < solicitacoesSelecionadasIds.length; i++) {
+                    const docId = solicitacoesSelecionadasIds[i];
+                    await window.db_updateDoc(window.db_doc(window.db, "solicitacoes", docId), {
+                        responsavelPcp: respPcp,
+                        areaPcp: areaDesignada,
+                        resposta: txtResposta,
+                        dataProducao: dtProd,
+                        dataRetornoPcp: dtRetPcp,
+                        status: nStatus,
+                        dataAtendimento: agora.toLocaleDateString("pt-BR"),
+                        logAuditoria: timestampLog
+                    });
+                }
+                
                 document.getElementById("modalResposta").style.display = "none";
-                alert("Retorno atualizado!");
-                inicializarOuvinteFirebase();
+                alert(`Sucesso! ${solicitacoesSelecionadasIds.length} retornos foram atualizados simultaneamente.`);
+                
+                solicitacoesSelecionadasIds = [];
+                const masterChk = document.getElementById("chkSelecionarTodos");
+                if(masterChk) masterChk.checked = false;
+
             } catch (error) {
-                console.error("Erro ao salvar retorno:", error);
-                alert("Erro ao salvar retorno.");
+                console.error("Erro ao salvar retorno em massa:", error);
+                alert("Erro ao salvar retornos no Firestore.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "ENVIAR RETORNO";
@@ -1693,17 +1916,17 @@
                 theme: 'striped',
                 styles: { fontSize: 7 },
                 columns: [
-                    { header: 'ID', dataKey: '0' },
-                    { header: 'TIPO', dataKey: '1' },
-                    { header: 'MERCADO', dataKey: '2' },
-                    { header: 'VENDEDOR', dataKey: '3' },
-                    { header: 'DT SOL', dataKey: '4' },
-                    { header: 'DT PREV', dataKey: '6' },
-                    { header: 'ÁREA', dataKey: '11' },
-                    { header: 'RESP PCP', dataKey: '12' },
-                    { header: 'CLIENTE', dataKey: '13' },
-                    { header: 'QTD', dataKey: '16' },
-                    { header: 'STATUS', dataKey: '18' }
+                    { header: 'ID', dataKey: '1' }, 
+                    { header: 'TIPO', dataKey: '2' },
+                    { header: 'MERCADO', dataKey: '3' },
+                    { header: 'VENDEDOR', dataKey: '4' },
+                    { header: 'DT SOL', dataKey: '5' },
+                    { header: 'DT PREV', dataKey: '7' },
+                    { header: 'ÁREA', dataKey: '12' },
+                    { header: 'RESP PCP', dataKey: '13' },
+                    { header: 'CLIENTE', dataKey: '14' },
+                    { header: 'QTD', dataKey: '17' },
+                    { header: 'STATUS', dataKey: '19' }
                 ]
             });
             doc.save("Programacao_MTO.pdf");

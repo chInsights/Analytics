@@ -9,903 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    
+    <link rel="stylesheet" href="style.css">
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.6.0/dist/jspdf.plugin.autotable.min.js"></script>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            onSnapshot, 
-            doc, 
-            updateDoc, 
-            deleteDoc,
-            query, 
-            where,
-            orderBy,
-            limit
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDz8qIZpkaj5ygJJJwyAfYH_3xKFxsZcU8",
-            authDomain: "mto-webapp.firebaseapp.com",
-            projectId: "mto-webapp",
-            storageBucket: "mto-webapp.firebasestorage.app",
-            messagingSenderId: "998118770114",
-            appId: "1:998118770114:web:f29f30ed3c28ba5dc2c25b"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        window.db = db;
-        window.auth = auth;
-        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.onAuthStateChanged = onAuthStateChanged;
-        window.db_collection = collection;
-        window.db_addDoc = addDoc;
-        window.db_onSnapshot = onSnapshot;
-        window.db_doc = doc;
-        window.db_updateDoc = updateDoc;
-        window.db_deleteDoc = deleteDoc;
-        window.db_query = query;
-        window.db_where = where;
-        window.db_orderBy = orderBy;
-        window.db_limit = limit;
-
-        window.onAuthStateChanged(window.auth, (user) => {
-            if (user) {
-                configurarSessaoUsuario(user.email);
-            }
-        });
-    </script>
-
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-            font-family:'Inter',sans-serif;
-        }
-
-        body{
-            background:#f8fafc;
-            color:#0f172a;
-            overflow:hidden;
-            position: relative;
-            min-height: 100vh;
-        }
-
-        .marca-dagua {
-            position: fixed;
-            bottom: 12px;
-            right: 20px;
-            font-size: 11px;
-            font-weight: 500;
-            color: #94a3b8;
-            opacity: 0.6;
-            z-index: 9999;
-            pointer-events: none;
-            letter-spacing: 0.5px;
-        }
-
-        /* LOGIN */
-        .login-screen{
-            width:100%;
-            height:100vh;
-            background: linear-gradient(135deg, rgba(2,6,23,0.92), rgba(15,23,42,0.95)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1600&auto=format&fit=crop');
-            background-size:cover;
-            background-position:center;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:30px;
-        }
-
-        .login-container{
-            width:1200px;
-            min-height:700px;
-            background:rgba(255,255,255,0.96);
-            border-radius:34px;
-            overflow:hidden;
-            display:grid;
-            grid-template-columns:1.1fr 0.9fr;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.35);
-        }
-
-        .login-left{
-            background: linear-gradient(135deg, #2563eb, #1e40af);
-            padding:60px;
-            color:white;
-            position:relative;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-        }
-
-        .login-left::before{
-            content:'';
-            position:absolute;
-            width:450px;
-            height:450px;
-            background:rgba(255,255,255,0.08);
-            border-radius:50%;
-            top:-120px;
-            right:-120px;
-        }
-
-        .login-left h1{
-            font-size:52px;
-            line-height:1.1;
-            margin-bottom:20px;
-        }
-
-        .login-left p{
-            font-size:17px;
-            color:rgba(255,255,255,0.85);
-            line-height:1.7;
-            margin-bottom:45px;
-        }
-
-        .login-cards{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:18px;
-        }
-
-        .login-card{
-            background:rgba(255,255,255,0.12);
-            backdrop-filter:blur(10px);
-            padding:24px;
-            border-radius:22px;
-        }
-
-        .login-card i{
-            font-size:28px;
-            margin-bottom:18px;
-        }
-
-        .login-card strong{
-            display:block;
-            font-size:20px;
-            margin-bottom:10px;
-        }
-
-        .login-card span{
-            font-size:13px;
-            color:rgba(255,255,255,0.82);
-            line-height:1.6;
-        }
-
-        .login-right{
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:60px;
-        }
-
-        .login-box{
-            width:100%;
-            max-width:420px;
-            }
-
-        .logo-login{
-            width:80px;
-            height:80px;
-            border-radius:24px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:36px;
-            font-weight:800;
-            margin-bottom:28px;
-        }
-
-        .login-box h2{
-            font-size:38px;
-            margin-bottom:12px;
-            color:#0f172a;
-        }
-
-        .login-box p{
-            color:#64748b;
-            margin-bottom:34px;
-            line-height:1.6;
-        }
-
-        .field{
-            margin-bottom:22px;
-        }
-
-        .field label{
-            display:block;
-            margin-bottom:8px;
-            font-size:13px;
-            font-weight:700;
-            color:#475569;
-        }
-
-        .field input{
-            width:100%;
-            padding:15px 16px;
-            border-radius:16px;
-            border:1px solid #cbd5e1;
-            background:#f8fafc;
-            font-size:14px;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .field input:focus{
-            outline:none;
-            border-color:#2563eb;
-            background:white;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
-        }
-
-        .login-btn{
-            width:100%;
-            padding:16px;
-            border:none;
-            border-radius:16px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color:white;
-            font-size:15px;
-            font-weight:700;
-            cursor:pointer;
-            transition:0.2s;
-        }
-
-        .login-btn:hover:not(:disabled){
-            transform:translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .login-btn:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        /* SISTEMA */
-        .app{
-            display:none;
-            width:100%;
-            height:100vh;
-        }
-
-        /* SIDEBAR */
-        .sidebar{
-            width:280px;
-            background:#020617;
-            color:white;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            padding:22px;
-            border-right:1px solid rgba(255,255,255,0.05);
-        }
-
-        .brand{
-            display:flex;
-            align-items:center;
-            gap:14px;
-            margin-bottom:40px;
-        }
-
-        .brand-logo{
-            width:60px;
-            height:60px;
-            border-radius:18px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:30px;
-            font-weight:800;
-        }
-
-        .brand h2{
-            font-size:24px;
-            font-weight:800;
-            margin-bottom: 2px;
-        }
-
-        .brand span{
-            color:#94a3b8;
-            font-size:13px;
-        }
-
-        .menu{
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-        }
-
-        .menu button{
-            width:100%;
-            border:none;
-            padding:15px 18px;
-            border-radius:16px;
-            background:transparent;
-            color:#cbd5e1;
-            text-align:left;
-            display:flex;
-            align-items:center;
-            gap:14px;
-            cursor:pointer;
-            transition:0.2s;
-            font-size:14px;
-        }
-
-        .menu button:hover{
-            background:rgba(255,255,255,0.06);
-            color:white;
-        }
-
-        .menu button.active{
-            background:#2563eb;
-            color:white;
-        }
-
-        .user-card{
-            background:rgba(255,255,255,0.04);
-            padding:18px;
-            border-radius:18px;
-        }
-
-        .user-card strong{
-            display:block;
-            margin-bottom:6px;
-        }
-
-        .user-card span{
-            color:#94a3b8;
-            font-size:13px;
-        }
-
-        .logout{
-            width:100%;
-            margin-top:14px;
-            padding:13px;
-            border:none;
-            border-radius:14px;
-            background:#ef4444;
-            color:white;
-            font-weight:700;
-            cursor:pointer;
-            transition: 0.2s;
-        }
-
-        .logout:hover {
-            background: #dc2626;
-        }
-
-        /* MAIN */
-        .main{
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            overflow:hidden;
-        }
-
-        /* TOPBAR */
-        .topbar{
-            height:84px;
-            background:white;
-            border-bottom:1px solid #e2e8f0;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            padding:0 28px;
-        }
-
-        .breadcrumb{
-            font-size:14px;
-            color:#64748b;
-            font-weight: 500;
-        }
-
-        .search-box{
-            width:320px;
-            position:relative;
-        }
-
-        .search-box i{
-            position:absolute;
-            left:15px;
-            top:16px;
-            color:#94a3b8;
-        }
-
-        .search-box input{
-            width:100%;
-            padding:14px 16px 14px 42px;
-            border-radius:16px;
-            border:1px solid #e2e8f0;
-            background:#f8fafc;
-            transition: all 0.2s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #2563eb;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-
-        /* CONTENT */
-        .content{
-            flex:1;
-            overflow:auto;
-            padding:28px;
-        }
-
-        /* PAGES */
-        .page{ display:none; }
-        .page.active{ display:block; }
-
-        .cards{
-            display:grid;
-            grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
-            gap:16px;
-            margin-bottom:24px;
-        }
-
-        .card{
-            background:white;
-            border-radius:22px;
-            padding:20px;
-            box-shadow: 0 4px 20px rgba(15,23,42,0.04);
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            border: 2px solid transparent;
-        }
-
-        .card:hover{
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(15,23,42,0.08);
-        }
-
-        .card.active-filter {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
-
-        .card-top{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-        }
-
-        .card-top i{
-            width:44px;
-            height:44px;
-            border-radius:12px;
-            background:#f1f5f9;
-            color:#475569;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size: 18px;
-        }
-
-        .card-icon-total { background: #f1f5f9 !important; color: #475569 !important; }
-        .card-icon-pendente { background: #fef3c7 !important; color: #d97706 !important; }
-        .card-icon-finalizado { background: #dcfce7 !important; color: #16a34a !important; }
-        .card-icon-aguardando { background: #dbeafe !important; color: #2563eb !important; }
-        .card-icon-pendencia { background: #fee2e2 !important; color: #dc2626 !important; }
-
-        .card-title{
-            color:#64748b;
-            font-size:13px;
-            font-weight:600;
-            margin-bottom: 4px;
-        }
-
-        .card-value{
-            font-size:30px;
-            font-weight:800;
-        }
-
-        /* FORM */
-        .form-box{
-            background:white;
-            border-radius:28px;
-            padding:28px;
-            margin-bottom:24px;
-            box-shadow: 0 4px 25px rgba(15,23,42,0.04);
-        }
-
-        .section-title{
-            font-size:24px;
-            font-weight:800;
-            margin-bottom:24px;
-        }
-
-        .grid{
-            display:grid;
-            grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-            gap:18px;
-        }
-
-        .full{ grid-column:1/-1; }
-
-        .field-label{
-            display:block;
-            margin-bottom:8px;
-            font-size:13px;
-            font-weight:700;
-            color:#475569;
-        }
-
-        input, textarea, select{
-            width:100%;
-            padding:14px 16px;
-            border-radius:16px;
-            border:1px solid #cbd5e1;
-            background:#f8fafc;
-            font-size:14px;
-            transition: all 0.2s ease-in-out;
-        }
-
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #2563eb;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-        }
-
-        input:read-only {
-            background: #e2e8f0;
-            color: #475569;
-            font-weight: 600;
-            cursor: not-allowed;
-            border-color: #cbd5e1;
-        }
-
-        textarea{
-            resize:none;
-            height:110px;
-        }
-
-        .send-btn{
-            margin-top:22px;
-            padding:14px 24px;
-            border:none;
-            border-radius:16px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color:white;
-            font-weight:700;
-            cursor:pointer;
-            transition: 0.2s;
-        }
-
-        .send-btn:hover:not(:disabled) {
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .send-btn:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        /* SEÇÃO DE ITENS DINÂMICOS */
-        .sub-secao-itens {
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            border-radius: 20px;
-            padding: 20px;
-            margin-top: 24px;
-        }
-
-        .botoes-acoes-itens {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .btn-adicionar-item {
-            background: #020617;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-adicionar-item:hover {
-            background: #1e293b;
-        }
-
-        .btn-importar-excel {
-            background: #16a34a;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-importar-excel:hover {
-            background: #15803d;
-        }
-
-        .tabela-itens-wrapper {
-            width: 100%;
-            overflow-x: hidden;
-            margin-top: 16px;
-            border-radius: 16px;
-            border: 1px solid #dbe2ea;
-            background: white;
-        }
-
-        .tabela-itens-provisorios {
-            width: 100% !important;
-            min-width: 0px !important;
-            border-collapse: collapse;
-            background: white;
-            table-layout: fixed;
-        }
-
-        .tabela-itens-provisorios th {
-            background: #f1f5f9;
-            padding: 12px 16px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #334155;
-            text-align: left;
-            border-bottom: 1px solid #dbe2ea;
-        }
-
-        .tabela-itens-provisorios td {
-            padding: 14px 16px;
-            font-size: 14px;
-            color: #0f172a;
-            border-bottom: 1px solid #f1f5f9;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .tabela-itens-provisorios tr.item-row {
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .tabela-itens-provisorios tr.item-row:hover {
-            background: #fee2e2;
-        }
-
-        /* ACTIONS */
-        .actions{
-            display:flex;
-            gap:12px;
-            margin-bottom:22px;
-            flex-wrap:wrap;
-            align-items: center;
-        }
-
-        /* TABLE */
-        .table-box{
-            background:white;
-            border-radius:28px;
-            overflow:auto;
-            box-shadow: 0 4px 25px rgba(15,23,42,0.04);
-            border: 1px solid #e2e8f0;
-        }
-
-        table{
-            width:100%;
-            border-collapse:collapse;
-            min-width:2650px;
-        }
-
-        th{
-            background:#f8fafc;
-            padding:18px;
-            font-size:12px;
-            color:#475569;
-            font-weight:800;
-            border-bottom:2px solid #e2e8f0;
-        }
-
-        td{
-            padding:16px;
-            font-size:13px;
-            border-bottom:1px solid #e2e8f0;
-            text-align:center;
-        }
-
-        tbody tr:nth-child(even) {
-            background: #f8fafc;
-        }
-
-        tbody tr:hover{ background:#f1f5f9 !important; }
-
-        .paginacao-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            margin-bottom: 30px;
-        }
-
-        .load-more-btn {
-            background: white;
-            color: #2563eb;
-            border: 2px solid #2563eb;
-            padding: 12px 28px;
-            border-radius: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .load-more-btn:hover {
-            background: #2563eb;
-            color: white;
-        }
-
-        /* STATUS BADGES */
-        .badge{
-            padding:7px 14px;
-            border-radius:999px;
-            color:white;
-            font-size:11px;
-            font-weight:700;
-        }
-
-        .pendente{ background:#f59e0b; }
-        .finalizado{ background:#22c55e; }
-        .aguardando{ background:#3b82f6; }
-        .pendencia{ background:#ef4444; }
-
-        /* RESPONSE & AUDITORIA */
-        .response{
-            margin-top:10px;
-            background:#eff6ff;
-            border-left:4px solid #2563eb;
-            padding:10px;
-            border-radius:10px;
-            text-align:left;
-            font-size:12px;
-        }
-
-        .log-auditoria {
-            margin-top: 6px;
-            font-size: 10px;
-            color: #94a3b8;
-            font-style: italic;
-            text-align: left;
-        }
-
-        /* BUTTONS */
-        .action-btn{
-            padding:10px 14px;
-            border:none;
-            border-radius:12px;
-            background:#2563eb;
-            color:white;
-            font-weight:700;
-            cursor:pointer;
-            transition: 0.2s;
-        }
-
-        .action-btn:hover { background: #1d4ed8; }
-
-        .delete-btn {
-            padding: 10px 14px;
-            border: none;
-            border-radius: 12px;
-            background: #ef4444;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            margin-left: 5px;
-            transition: 0.2s;
-        }
-
-        .delete-btn:hover { background: #dc2626; }
-
-        .btn-massa {
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-massa:hover {
-            background: #7c3aed;
-        }
-
-        /* CUSTOM CHECKBOX STYLE */
-        .col-checkbox {
-            width: 50px;
-            text-align: center;
-        }
-
-        .chk-solicitacao {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        /* MODAL */
-        .modal{
-            position:fixed;
-            inset:0;
-            background:rgba(15,23,42,0.6);
-            backdrop-filter: blur(4px);
-            display:none;
-            justify-content:flex-end;
-            z-index: 999;
-        }
-
-        .modal-content{
-            width:460px;
-            height:100%;
-            background:white;
-            padding:28px;
-            overflow:auto;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.15);
-        }
-
-        .modal-title{
-            font-size:24px;
-            font-weight:800;
-            margin-bottom:24px;
-        }
-
-        .save-btn{
-            width:100%;
-            margin-top:22px;
-            padding:15px;
-            border:none;
-            border-radius:16px;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color:white;
-            font-weight:700;
-            cursor:pointer;
-            transition: 0.2s;
-        }
-
-        .save-btn:hover { box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2); }
-
-        .hidden{ display:none; }
-
-        @media(max-width:1200px){
-            .sidebar{ display:none; }
-            .login-container{ grid-template-columns:1fr; }
-            .login-left{ display:none; }
-        }
-    </style>
 </head>
 
 <body>
@@ -918,6 +27,7 @@
                 <div>
                     <h1>Plataforma Corporativa MTO</h1>
                     <p>Sistema operacional para gestão de solicitações, retornos PCP e acompanhamento de produção em tempo real.</p>
+                    
                     <div class="login-cards">
                         <div class="login-card">
                             <i class="fa-solid fa-chart-line"></i>
@@ -947,15 +57,17 @@
                 <div class="login-box">
                     <div class="logo-login">N</div>
                     <h2>Programação MTO</h2>
-                    <p>Acesse com seu e-mail e senha cadastrados no Firebase Auth.</p>
+                    <p>Acesse com seu e-mail e senha cadastrados.</p>
+
                     <div class="field">
-                        <label>E-MAIL</label>
+                        <label for="usuario">E-MAIL</label>
                         <input type="email" id="usuario" placeholder="exemplo@dominio.com">
                     </div>
                     <div class="field">
-                        <label>SENHA</label>
+                        <label for="senha">SENHA</label>
                         <input type="password" id="senha" placeholder="******">
                     </div>
+                    
                     <button class="login-btn" id="btnLogin" onclick="login()">ACESSAR SISTEMA</button>
                 </div>
             </div>
@@ -963,7 +75,8 @@
     </div>
 
     <div class="app" id="app">
-        <div class="sidebar">
+        
+        <aside class="sidebar">
             <div>
                 <div class="brand">
                     <div class="brand-logo">N</div>
@@ -972,14 +85,15 @@
                         <span>Painel Corporativo</span>
                     </div>
                 </div>
-                <div class="menu">
-                    <button class="active" onclick="abrirPagina('solicitacoes',this)">
+
+                <nav class="menu">
+                    <button class="active" onclick="abrirPagina('solicitacoes', this)">
                         <i class="fa-solid fa-table-columns"></i> Painel de Controle
                     </button>
-                    <button onclick="abrirPagina('exportacoes',this)">
+                    <button onclick="abrirPagina('exportacoes', this)">
                         <i class="fa-solid fa-file-export"></i> Exportações
                     </button>
-                </div>
+                </nav>
             </div>
 
             <div class="user-card">
@@ -987,16 +101,16 @@
                 <span>Plataforma Corporativa MTO</span>
                 <button class="logout" onclick="logout()">SAIR</button>
             </div>
-        </div>
+        </aside>
 
-        <div class="main">
-            <div class="topbar">
+        <main class="main">
+            <header class="topbar">
                 <div class="breadcrumb">Programação MTO / Operações Real-time</div>
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" id="inputBusca" placeholder="Pesquisar por cliente, código, vendedor..." oninput="renderTabela()">
                 </div>
-            </div>
+            </header>
 
             <div class="content">
                 <div class="page active" id="solicitacoes">
@@ -1011,6 +125,7 @@
                                 <i class="fa-solid fa-list card-icon-total"></i>
                             </div>
                         </div>
+
                         <div class="card" id="cardPendente" onclick="filtrarPorStatus('PENDENTE')">
                             <div class="card-top">
                                 <div>
@@ -1020,6 +135,7 @@
                                 <i class="fa-solid fa-clock card-icon-pendente"></i>
                             </div>
                         </div>
+
                         <div class="card" id="cardFinalizado" onclick="filtrarPorStatus('FINALIZADO')">
                             <div class="card-top">
                                 <div>
@@ -1029,6 +145,7 @@
                                 <i class="fa-solid fa-circle-check card-icon-finalizado"></i>
                             </div>
                         </div>
+
                         <div class="card" id="cardAguardando" onclick="filtrarPorStatus('AGUARDANDO')">
                             <div class="card-top">
                                 <div>
@@ -1038,6 +155,7 @@
                                 <i class="fa-solid fa-hourglass-half card-icon-aguardando"></i>
                             </div>
                         </div>
+
                         <div class="card" id="cardPendencia" onclick="filtrarPorStatus('PENDÊNCIA')">
                             <div class="card-top">
                                 <div>
@@ -1051,6 +169,7 @@
 
                     <div class="form-box hidden" id="formSolicitante">
                         <div class="section-title">Nova Solicitação MTO</div>
+                        
                         <div class="grid">
                             <div>
                                 <label class="field-label">VENDEDOR *</label>
@@ -1085,7 +204,10 @@
                         </div>
 
                         <div class="sub-secao-itens">
-                            <h3 style="font-size: 16px; margin-bottom: 14px; color: #1e293b;"><i class="fa-solid fa-boxes-stacked"></i> Incluir Itens no Pedido</h3>
+                            <h3 style="font-size: 16px; margin-bottom: 14px; color: #1e293b;">
+                                <i class="fa-solid fa-boxes-stacked"></i> Incluir Itens no Pedido
+                            </h3>
+                            
                             <div class="grid">
                                 <div>
                                     <label class="field-label">COD ITEM (Box) *</label>
@@ -1094,8 +216,8 @@
                                 <div>
                                     <label class="field-label">TIPO DE MATERIAL</label>
                                     <select id="itemTipoMaterial" onchange="calcularPrevisaoItem()">
-                                        <option value="MTO">MTO (12 dias)</option>
-                                        <option value="Etiquetagem">Etiquetagem (17 dias)</option>
+                                        <option value="MTO">MTO</option>
+                                        <option value="Etiquetagem">Etiquetagem</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1135,7 +257,9 @@
                                     </thead>
                                     <tbody id="listaItensProvisorios">
                                         <tr>
-                                            <td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">Nenhum item adicionado (Dê duplo clique na linha inserida para remover).</td>
+                                            <td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">
+                                                Nenhum item adicionado (Dê duplo clique na linha inserida para remover).
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1166,7 +290,9 @@
                         <table id="tabelaMtoHTML">
                             <thead>
                                 <tr>
-                                    <th class="col-checkbox id-pcp-view hidden"><input type="checkbox" id="chkSelecionarTodos" class="chk-solicitacao" onclick="toggleSelecionarTodos(this)"></th>
+                                    <th class="col-checkbox id-pcp-view hidden">
+                                        <input type="checkbox" id="chkSelecionarTodos" class="chk-solicitacao" onclick="toggleSelecionarTodos(this)">
+                                    </th>
                                     <th>ID</th>
                                     <th>TIPO</th>
                                     <th>MERCADO</th>
@@ -1209,6 +335,7 @@
                             </div>
                             <button class="send-btn" onclick="exportarExcel()">BAIXAR XLSX</button>
                         </div>
+                        
                         <div class="card">
                             <div class="card-top">
                                 <div>
@@ -1220,36 +347,49 @@
                         </div>
                     </div>
                 </div>
+
             </div>
-        </div>
+        </main>
     </div>
 
     <div class="modal" id="modalResposta">
         <div class="modal-content">
-            <div class="modal-title" id="modalTituloGeral">Responder Solicitação</div>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTituloGeral">Responder Solicitação</h2>
+                <button type="button" class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
+            </div>
+            
             <div class="field">
                 <label class="field-label">RESPONSÁVEL PELO RETORNO *</label>
                 <input type="text" id="responsavelPcp" placeholder="Seu nome completo...">
             </div>
+            
             <div class="field">
                 <label class="field-label">ÁREA DESIGNADA *</label>
                 <select id="areaPcp">
                     <option value="Montagem">Montagem</option>
                     <option value="Escolha">Escolha</option>
+                    <option value="Usinagem">Usinagem</option>
+                    <option value="Pintura">Pintura</option>
+                    <option value="Logística">Logística</option>
                 </select>
             </div>
+            
             <div class="field">
-                <label class="field-label">RETORNO</label>
-                <textarea id="respostaTexto"></textarea>
+                <label class="field-label">RETORNO / OBSERVAÇÃO</label>
+                <textarea id="respostaTexto" placeholder="Escreva o retorno para a equipe comercial..."></textarea>
             </div>
+            
             <div class="field">
                 <label class="field-label">DATA PRODUÇÃO</label>
                 <input type="date" id="dataProducao">
             </div>
+            
             <div class="field">
                 <label class="field-label">DATA RETORNO PCP</label>
                 <input type="date" id="dataRetornoPcp">
             </div>
+            
             <div class="field">
                 <label class="field-label">STATUS</label>
                 <select id="novoStatus">
@@ -1259,678 +399,11 @@
                     <option value="PENDÊNCIA">PENDÊNCIA</option>
                 </select>
             </div>
+            
             <button class="save-btn" id="btnSalvarResposta" onclick="salvarResposta()">ENVIAR RETORNO</button>
         </div>
     </div>
 
-    <script>
-        let usuarioAtual = null;
-        let emailAutenticado = "";
-        let solicitacoes = [];
-        let itensDoPedidoAtual = []; 
-        let solicitacoesSelecionadasIds = []; 
-        let filtroMesAtual = "";
-        let filtroStatusAtual = "TODOS";
-        let limiteRegistros = 100;
-        let unsubscribeRealtime = null;
-
-        /* TRAVA DATAS RETROATIVAS */
-        function aplicarBloqueioDatasRetroativas() {
-            const hoje = new Date();
-            const ano = hoje.getFullYear();
-            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoje.getDate()).padStart(2, '0');
-            const dataMinima = `${ano}-${mes}-${dia}`;
-            
-            document.getElementById("itemDataCliente").min = dataMinima;
-            document.getElementById("itemDataDesejavel").min = dataMinima;
-        }
-
-        function configuringDataSolicitacaoAutomatica() {
-            const hoje = new Date();
-            const dia = String(hoje.getDate()).padStart(2, '0');
-            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-            const ano = hoje.getFullYear();
-            document.getElementById("dataSolicitacao").value = `${dia}/${mes}/${ano}`;
-        }
-
-        function calcularPrevisaoItem() {
-            const tipoMaterial = document.getElementById("itemTipoMaterial").value;
-            const quantidade = document.getElementById("itemQuantidade").value;
-            const campoPrevisao = document.getElementById("itemPrevisaoEntrega");
-
-            if (!quantidade || quantidade <= 0) {
-                campoPrevisao.value = "";
-                return;
-            }
-
-            return calcularPrevisaoEspecifica(tipoMaterial, quantidade);
-        }
-
-        function calcularPrevisaoEspecifica(tipoMaterial, quantidade) {
-            if (!quantidade || quantidade <= 0) return "-";
-            const dataCalculo = new Date();
-            const diasAdicionais = (tipoMaterial === "MTO" || tipoMaterial === "mto") ? 12 : 17;
-            dataCalculo.setDate(dataCalculo.getDate() + diasAdicionais);
-
-            const dia = String(dataCalculo.getDate()).padStart(2, '0');
-            const mes = String(dataCalculo.getMonth() + 1).padStart(2, '0');
-            const ano = dataCalculo.getFullYear();
-
-            const resultado = `${dia}/${mes}/${ano}`;
-            const campoPrevisao = document.getElementById("itemPrevisaoEntrega");
-            if(campoPrevisao && !document.getElementById("inputExcelItem").files.length) {
-                campoPrevisao.value = resultado;
-            }
-            return resultado;
-        }
-
-        /* IMPORTAÇÃO DE ITENS VIA EXCEL */
-        function importarItensDoExcel(event) {
-            const arquivo = event.target.files[0];
-            const cli = document.getElementById("cliente").value.trim();
-            const numPedido = document.getElementById("numeroPedido").value.trim();
-
-            if (!cli || !numPedido) {
-                alert("Por favor, preencha os campos CLIENTE e NÚMERO DO PEDIDO antes de importar a planilha.");
-                event.target.value = "";
-                return;
-            }
-
-            if (!arquivo) return;
-
-            const leitor = new FileReader();
-            leitor.onload = function(e) {
-                try {
-                    const dadosBinarios = e.target.result;
-                    const livroExcel = XLSX.read(dadosBinarios, { type: 'binary' });
-                    const primeiraAba = livroExcel.SheetNames[0];
-                    const planilha = livroExcel.Sheets[primeiraAba];
-                    
-                    const linhas = XLSX.utils.sheet_to_json(planilha);
-
-                    if (linhas.length === 0) {
-                        alert("A planilha importada está vazia.");
-                        return;
-                    }
-
-                    let itensAdicionadosContador = 0;
-
-                    linhas.forEach(linha => {
-                        const cod = String(linha["Item"] || linha["Item (Código)"] || linha["Código"] || linha["codigo"] || linha["item"] || "").trim();
-                        const qtd = Number(linha["Quantidade"] || linha["Qtd"] || linha["quantidade"] || linha["qtd"] || 0);
-                        const tipo = "MTO"; 
-
-                        if (cod && qtd > 0) {
-                            const prevCalculada = calcularPrevisaoEspecifica(tipo, qtd);
-
-                            itensDoPedidoAtual.push({
-                                codItem: cod,
-                                tipoMaterial: tipo,
-                                quantidade: qtd,
-                                dataPrevista: prevCalculada,
-                                dataCliente: "-",
-                                dataDesejavel: "-",
-                                numeroPedido: numPedido 
-                            });
-                            itensAdicionadosContador++;
-                        }
-                    });
-
-                    renderListaItensProvisorios();
-                    alert(`Sucesso! ${itensAdicionadosContador} itens foram importados e associados ao Cliente "${cli}" e Pedido "${numPedido}".`);
-
-                } catch (erro) {
-                    console.error(erro);
-                    alert("Erro ao ler o arquivo Excel. Certifique-se de que a planilha possui as colunas 'Item' e 'Quantidade'.");
-                } finally {
-                    event.target.value = ""; 
-                }
-            };
-
-            leitor.readAsBinaryString(arquivo);
-        }
-
-        /* OPERAÇÃO DA LISTA DE ITENS PROVISÓRIOS */
-        function adicionarItemNaLista() {
-            const cod = document.getElementById("itemCod").value.trim();
-            const tipo = document.getElementById("itemTipoMaterial").value;
-            const qtd = document.getElementById("itemQuantidade").value;
-            const prev = document.getElementById("itemPrevisaoEntrega").value;
-            const dtCliRaw = document.getElementById("itemDataCliente").value;
-            const dtDesRaw = document.getElementById("itemDataDesejavel").value;
-            const numPedido = document.getElementById("numeroPedido").value.trim();
-
-            if(!numPedido) {
-                alert("Por favor, digite o NÚMERO DO PEDIDO antes de adicionar itens na lista.");
-                return;
-            }
-
-            if(!cod || !qtd || !prev) {
-                alert("Por favor, preencha o Código do item, a Quantidade e gere a Previsão antes de adicionar.");
-                return;
-            }
-
-            let dtCliFormatada = "-";
-            if(dtCliRaw) {
-                const p = dtCliRaw.split('-');
-                dtCliFormatada = `${p[2]}/${p[1]}/${p[0]}`;
-            }
-
-            let dtDesFormatada = "-";
-            if(dtDesRaw) {
-                const p = dtDesRaw.split('-');
-                dtDesFormatada = `${p[2]}/${p[1]}/${p[0]}`;
-            }
-
-            itensDoPedidoAtual.push({
-                codItem: cod,
-                tipoMaterial: tipo,
-                quantidade: Number(qtd),
-                dataPrevista: prev,
-                dataCliente: dtCliFormatada,
-                dataDesejavel: dtDesFormatada,
-                numeroPedido: numPedido
-            });
-
-            document.getElementById("itemCod").value = "";
-            document.getElementById("itemQuantidade").value = "";
-            document.getElementById("itemPrevisaoEntrega").value = "";
-            document.getElementById("itemDataCliente").value = "";
-            document.getElementById("itemDataDesejavel").value = "";
-
-            renderListaItensProvisorios();
-        }
-
-        function removerItemDaLista(index) {
-            itensDoPedidoAtual.splice(index, 1);
-            renderListaItensProvisorios();
-        }
-
-        function renderListaItensProvisorios() {
-            const tbody = document.getElementById("listaItensProvisorios");
-            if(itensDoPedidoAtual.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">Nenhum item adicionado (Dê duplo clique na linha inserida para remover).</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = "";
-            itensDoPedidoAtual.forEach((item, index) => {
-                tbody.innerHTML += `
-                    <tr class="item-row" ondblclick="removerItemDaLista(${index})" title="Duplo clique para remover">
-                        <td><span style="font-weight:600; color:#0f172a;">${item.codItem}</span> <small style="color:#64748b;">(${item.tipoMaterial})</small></td>
-                        <td><strong>${item.quantidade}</strong></td>
-                        <td><span style="color:#475569;">${item.numeroPedido}</span></td>
-                    </tr>
-                `;
-            });
-        }
-
-        /* PERFIL OPERACIONAL */
-        function configurarSessaoUsuario(email) {
-            emailAutenticado = email.trim().toLowerCase();
-
-            if(emailAutenticado === "programacaomto@vendedor.com" || emailAutenticado.includes("vendedor")){
-                usuarioAtual = "Vendedor/Comercial";
-            } else if(emailAutenticado === "atendimento@pcp.com"){
-                usuarioAtual = "Atendimento-PCP"; 
-                document.getElementById("btnRespostaMassa").classList.remove("hidden");
-                document.querySelectorAll(".id-pcp-view").forEach(el => el.classList.remove("hidden"));
-            } else {
-                usuarioAtual = emailAutenticado.split('@')[0];
-            }
-
-            document.getElementById("loginScreen").style.display = "none";
-            document.getElementById("app").style.display = "flex";
-            document.getElementById("usuarioLogado").innerText = usuarioAtual;
-
-            if(emailAutenticado === "programacaomto@vendedor.com" || emailAutenticado.includes("vendedor")){
-                document.getElementById("formSolicitante").classList.remove("hidden");
-                configuringDataSolicitacaoAutomatica();
-                aplicarBloqueioDatasRetroativas();
-            }
-
-            inicializarOuvinteFirebase();
-        }
-
-        async function login(){
-            const email = document.getElementById("usuario").value.trim().toLowerCase();
-            const senha = document.getElementById("senha").value;
-            const btn = document.getElementById("btnLogin");
-
-            if(!email || !senha){
-                alert("Por favor, preencha o e-mail e a senha.");
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "ACESSANDO...";
-
-            try {
-                await window.signInWithEmailAndPassword(window.auth, email, senha);
-            } catch (error) {
-                console.error("Erro na autenticação:", error);
-                alert("Credenciais inválidas ou erro de rede.");
-                btn.disabled = false;
-                btn.innerText = "ACESSAR SISTEMA";
-            }
-        }
-
-        function logout(){
-            window.auth.signOut().then(() => {
-                location.reload();
-            });
-        }
-
-        function abrirPagina(id,btn){
-            document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-            document.getElementById(id).classList.add("active");
-            document.querySelectorAll(".menu button").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-        }
-
-        /* CONEXÃO REAL-TIME FIRESTORE */
-        function inicializarOuvinteFirebase() {
-            if(!window.db) {
-                setTimeout(inicializarOuvinteFirebase, 500);
-                return;
-            }
-
-            if(unsubscribeRealtime) unsubscribeRealtime();
-
-            let q = window.db_query(
-                window.db_collection(window.db, "solicitacoes"),
-                window.db_orderBy("id", "desc"),
-                window.db_limit(limiteRegistros)
-            );
-            
-            unsubscribeRealtime = window.db_onSnapshot(q, (querySnapshot) => {
-                solicitacoes = [];
-                querySnapshot.forEach((doc) => {
-                    let dados = doc.data();
-                    dados.docId = doc.id;
-                    solicitacoes.push(dados);
-                });
-                renderTabela();
-            }, (error) => {
-                console.error("Erro no Listener Real-time:", error);
-            });
-        }
-
-        function carregarMaisRegistros() {
-            limiteRegistros += 50;
-            inicializarOuvinteFirebase();
-        }
-
-        /* ENVIO DE MULTI-ITENS */
-        async function enviarSolicitacaoMultiiens(){
-            const vendedor = document.getElementById("vendedorNome").value.trim();
-            const mercadoValor = document.getElementById("mercadoSolicitante").value;
-            const cli = document.getElementById("cliente").value.trim();
-            const btn = document.getElementById("btnEnviarSol");
-            const dataSol = document.getElementById("dataSolicitacao").value;
-            const obs = document.getElementById("observacao").value;
-            const dest = document.getElementById("destinatario").value;
-
-            if(!vendedor) { alert("O preenchimento do campo VENDEDOR é obrigatório."); return; }
-            if(!cli) { alert("O campo CLIENTE é obrigatório."); return; }
-            if(itensDoPedidoAtual.length === 0) { alert("Você deve adicionar ou importar pelo menos 1 item na lista antes de enviar."); return; }
-
-            btn.disabled = true;
-            btn.innerText = "ENVIANDO PEDIDO...";
-
-            try {
-                for(let i = 0; i < itensDoPedidoAtual.length; i++) {
-                    const item = itensDoPedidoAtual[i];
-                    
-                    const novaSolicitacao = {
-                        id: Date.now() + i, 
-                        vendedor: vendedor,
-                        tipoMaterial: item.tipoMaterial,
-                        mercadoSolicitante: mercadoValor,
-                        dataSolicitacao: dataSol, 
-                        dataCliente: item.dataCliente,
-                        dataPrevista: item.dataPrevista,
-                        dataDesejavel: item.dataDesejavel,
-                        dataAtendimento: "-",
-                        dataProducao: "-",
-                        dataRetornoPcp: "-",
-                        areaPcp: "-",
-                        responsavelPcp: "-",
-                        cliente: cli,
-                        codItem: item.codItem,
-                        numeroPedido: item.numeroPedido || "-", 
-                        quantidade: item.quantidade,
-                        observacao: obs,
-                        remetenteEmail: emailAutenticado, 
-                        destinatario: dest.trim().toLowerCase(),
-                        status: "PENDENTE",
-                        resposta: "",
-                        logAuditoria: ""
-                    };
-
-                    await window.db_addDoc(window.db_collection(window.db, "solicitacoes"), novaSolicitacao);
-                }
-
-                alert("Pedido completo enviado com sucesso! " + itensDoPedidoAtual.length + " itens cadastrados.");
-                
-                document.getElementById("cliente").value = "";
-                document.getElementById("numeroPedido").value = ""; 
-                document.getElementById("observacao").value = "";
-                
-                itensDoPedidoAtual = [];
-                renderListaItensProvisorios();
-                configuringDataSolicitacaoAutomatica();
-                inicializarOuvinteFirebase();
-
-            } catch (error) {
-                console.error(error);
-                alert("Erro ao gravar dados do pedido múltiplo.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "ENVIAR PEDIDO COMPLETO";
-            }
-        }
-
-        function filtrarPorStatus(status) {
-            filtroStatusAtual = status;
-            document.querySelectorAll(".card").forEach(c => c.classList.remove("active-filter"));
-            
-            if(status === 'TODOS') document.getElementById("cardTotal").classList.add("active-filter");
-            if(status === 'PENDENTE') document.getElementById("cardPendente").classList.add("active-filter");
-            if(status === 'FINALIZADO') document.getElementById("cardFinalizado").classList.add("active-filter");
-            if(status === 'AGUARDANDO') document.getElementById("cardAguardando").classList.add("active-filter");
-            if(status === 'PENDÊNCIA') document.getElementById("cardPendencia").classList.add("active-filter");
-
-            renderTabela();
-        }
-
-        function filtrarMes(){
-            filtroMesAtual = document.getElementById("filtroMes").value;
-            renderTabela();
-        }
-
-        function limparFiltro(){
-            filtroMesAtual = "";
-            document.getElementById("filtroMes").value = "";
-            renderTabela();
-        }
-
-        /* SELEÇÃO EM MASSA (CHECKBOXES) */
-        function toggleSelecionarTodos(master) {
-            const checkboxes = document.querySelectorAll(".chk-solicitacao-item");
-            checkboxes.forEach(chk => {
-                chk.checked = master.checked;
-                atualizarArraySelecao(chk.value, master.checked);
-            });
-        }
-
-        function gerenciarSelecaoItem(chk) {
-            atualizarArraySelecao(chk.value, chk.checked);
-            if(!chk.checked) {
-                document.getElementById("chkSelecionarTodos").checked = false;
-            }
-        }
-
-        function atualizarArraySelecao(id, adicionar) {
-            if(adicionar) {
-                if(!solicitacoesSelecionadasIds.includes(id)) {
-                    solicitacoesSelecionadasIds.push(id);
-                }
-            } else {
-                solicitacoesSelecionadasIds = solicitacoesSelecionadasIds.filter(x => x !== id);
-            }
-        }
-
-        /* RENDERIZAÇÃO DA TABELA */
-        function renderTabela(){
-            const tabela = document.getElementById("tabelaSolicitacoes");
-            const busca = document.getElementById("inputBusca").value.toLowerCase().trim();
-            tabela.innerHTML = "";
-
-            let baseDados = solicitacoes;
-            if (emailAutenticado !== "atendimento@pcp.com") {
-                baseDados = solicitacoes.filter(item => item.remetenteEmail === emailAutenticado);
-            }
-
-            let filtradas = baseDados.filter(item => {
-                if(filtroStatusAtual !== "TODOS" && item.status !== filtroStatusAtual) return false;
-
-                if(filtroMesAtual && item.dataSolicitacao){
-                    const partes = item.dataSolicitacao.split('/');
-                    if(partes.length === 3) {
-                        const mesAnoRef = `${partes[2]}-${partes[1]}`;
-                        if(mesAnoRef !== filtroMesAtual) return false;
-                    }
-                }
-
-                if(busca){
-                    const matchCliente = item.cliente && item.cliente.toLowerCase().includes(busca);
-                    const matchCodigo = item.codItem && item.codItem.toLowerCase().includes(busca);
-                    const matchVendedor = item.vendedor && item.vendedor.toLowerCase().includes(busca);
-                    const matchMercado = item.mercadoSolicitante && item.mercadoSolicitante.toLowerCase().includes(busca);
-                    const matchPedido = item.numeroPedido && String(item.numeroPedido).toLowerCase().includes(busca);
-                    return matchCliente || matchCodigo || matchVendedor || matchMercado || matchPedido;
-                }
-
-                return true;
-            });
-
-            filtradas.forEach(item => {
-                let botoesAcao = '-';
-                let tdCheckbox = '';
-
-                // Verifica se este item já estava marcado antes para manter o checkbox ativo
-                let isChecked = solicitacoesSelecionadasIds.includes(item.docId) ? 'checked' : '';
-
-                if(emailAutenticado === "atendimento@pcp.com") {
-                    let btnResponder = `<button class="action-btn" onclick="abrirModal('${item.docId}')">RESPONDER</button>`;
-                    let btnExcluir = `<button class="delete-btn" onclick="deletarSolicitacao('${item.docId}')"><i class="fa-solid fa-trash"></i></button>`;
-                    botoesAcao = btnResponder + btnExcluir;
-
-                    tdCheckbox = `<td class="col-checkbox"><input type="checkbox" value="${item.docId}" ${isChecked} class="chk-solicitacao-item chk-solicitacao" onclick="gerenciarSelecaoItem(this)"></td>`;
-                } else {
-                    tdCheckbox = `<td class="col-checkbox id-pcp-view hidden"></td>`;
-                }
-
-                tabela.innerHTML += `
-                <tr>
-                    ${tdCheckbox}
-                    <td>${item.id}</td>
-                    <td><strong>${item.tipoMaterial || "MTO"}</strong></td>
-                    <td><span style="color:#475569; font-weight:600;">${item.mercadoSolicitante || "-"}</span></td>
-                    <td><span style="color:#1e40af; font-weight:600;">${item.vendedor || "-"}</span></td>
-                    <td>${item.dataSolicitacao || "-"}</td>
-                    <td>${item.dataCliente || "-"}</td>
-                    <td style="color:#1d4ed8; font-weight:700; background:#eff6ff;">${item.dataPrevista || "-"}</td>
-                    <td style="color:#0ea5e9; font-weight:700;">${item.dataDesejavel || "-"}</td>
-                    <td>${item.dataAtendimento || "-"}</td>
-                    <td>${item.dataProducao || "-"}</td>
-                    <td>${item.dataRetornoPcp || "-"}</td>
-                    <td><span style="font-weight:600; color:#475569;">${item.areaPcp || "-"}</span></td>
-                    <td><strong>${item.responsavelPcp || "-"}</strong></td>
-                    <td>${item.cliente || "-"}</td>
-                    <td>${item.codItem || "-"}</td>
-                    <td style="font-weight:600; color:#334155;">${item.numeroPedido || "-"}</td>
-                    <td>${item.quantidade || 0}</td>
-                    <td>
-                        <div style="text-align:left;">${item.observacao || ""}</div>
-                        ${item.resposta ? `<div class="response"><b>RETORNO PCP:</b><br>${item.resposta}</div>` : ''}
-                        ${item.logAuditoria ? `<div class="log-auditoria"><i class="fa-solid fa-clock-rotate-left"></i> ${item.logAuditoria}</div>` : ''}
-                    </td>
-                    <td>
-                        <span class="badge ${
-                            item.status === 'FINALIZADO' ? 'finalizado' :
-                            item.status === 'AGUARDANDO' ? 'aguardando' :
-                            item.status === 'PENDÊNCIA' ? 'pendencia' : 'pendente'
-                        }">
-                            ${item.status || 'PENDENTE'}
-                        </span>
-                    </td>
-                    <td>${botoesAcao}</td>
-                </tr>`;
-            });
-
-            atualizarKPIs(baseDados);
-        }
-
-        function atualizarKPIs(dadosDoPerfil){
-            document.getElementById("kpiTotal").innerText = dadosDoPerfil.length;
-            document.getElementById("kpiPendentes").innerText = dadosDoPerfil.filter(x => x.status === "PENDENTE").length;
-            document.getElementById("kpiFinalizados").innerText = dadosDoPerfil.filter(x => x.status === "FINALIZADO").length;
-            document.getElementById("kpiAguardando").innerText = dadosDoPerfil.filter(x => x.status === "AGUARDANDO").length;
-            document.getElementById("kpiPendencias").innerText = dadosDoPerfil.filter(x => x.status === "PENDÊNCIA").length;
-        }
-
-        async function deletarSolicitacao(docId) {
-            if(!confirm("Tem certeza que deseja apagar permanentemente esta solicitação?")) return;
-            try {
-                await window.db_deleteDoc(window.db_doc(window.db, "solicitacoes", docId));
-                alert("Solicitação deletada!");
-            } catch (error) {
-                alert("Erro ao remover.");
-            }
-        }
-
-        /* OPERAÇÃO DO MODAL DE RESPOSTA */
-        function abrirModal(docId){
-            solicitacoesSelecionadasIds = [docId];
-            const item = solicitacoes.find(x => x.docId === docId);
-
-            document.getElementById("modalTituloGeral").innerText = "Responder Solicitação";
-            document.getElementById("responsavelPcp").value = item.responsavelPcp !== "-" ? item.responsavelPcp : "";
-            document.getElementById("areaPcp").value = item.areaPcp !== "-" ? item.areaPcp : "Montagem";
-            document.getElementById("respostaTexto").value = item.resposta || "";
-            document.getElementById("dataProducao").value = item.dataProducao !== "-" ? item.dataProducao : "";
-            document.getElementById("dataRetornoPcp").value = item.dataRetornoPcp !== "-" ? item.dataRetornoPcp : "";
-            document.getElementById("novoStatus").value = item.status || "PENDENTE";
-
-            document.getElementById("modalResposta").style.display = "flex";
-        }
-
-        function abrirModalMassa() {
-            // Varre a tela buscando elementos marcados e atualiza a lista definitiva
-            const marcadosNaTela = document.querySelectorAll(".chk-solicitacao-item:checked");
-            if (marcadosNaTela.length > 0) {
-                solicitacoesSelecionadasIds = Array.from(marcadosNaTela).map(chk => chk.value);
-            }
-
-            if(solicitacoesSelecionadasIds.length === 0) {
-                alert("Por favor, selecione pelo menos uma linha na tabela marcando a caixa de seleção.");
-                return;
-            }
-
-            document.getElementById("modalTituloGeral").innerText = `Responder ${solicitacoesSelecionadasIds.length} Itens Selecionados`;
-            document.getElementById("responsavelPcp").value = "";
-            document.getElementById("areaPcp").value = "Montagem";
-            document.getElementById("respostaTexto").value = "";
-            document.getElementById("dataProducao").value = "";
-            document.getElementById("dataRetornoPcp").value = "";
-            document.getElementById("novoStatus").value = "PENDENTE";
-
-            document.getElementById("modalResposta").style.display = "flex";
-        }
-
-        window.onclick = function(e) {
-            const m = document.getElementById("modalResposta");
-            if (e.target == m) m.style.display = "none";
-        }
-
-        /* ATUALIZAÇÃO EM MASSA FIXADA */
-        async function salvarResposta(){
-            // Garante a varredura atualizada dos elementos marcados em tela no exato clique do botão
-            const marcadosNaTela = document.querySelectorAll(".chk-solicitacao-item:checked");
-            if (marcadosNaTela.length > 0) {
-                solicitacoesSelecionadasIds = Array.from(marcadosNaTela).map(chk => chk.value);
-            }
-
-            if(solicitacoesSelecionadasIds.length === 0) {
-                alert("Nenhum item selecionado para salvar.");
-                return;
-            }
-            
-            const respPcp = document.getElementById("responsavelPcp").value.trim();
-            const areaDesignada = document.getElementById("areaPcp").value;
-            const txtResposta = document.getElementById("respostaTexto").value;
-            const dtProd = document.getElementById("dataProducao").value || "-";
-            const dtRetPcp = document.getElementById("dataRetornoPcp").value || "-";
-            const nStatus = document.getElementById("novoStatus").value;
-            
-            if(!respPcp) { alert("Insira o nome do Responsável pelo PCP."); return; }
-
-            const btn = document.getElementById("btnSalvarResposta");
-            btn.disabled = true;
-            btn.innerText = "ATUALIZANDO BANCO...";
-
-            const agora = new Date();
-            const timestampLog = `Modificado por ${emailAutenticado} em ${agora.toLocaleDateString("pt-BR")} às ${agora.toLocaleTimeString("pt-BR")}`;
-
-            try {
-                // Loop assíncrono garantido sobre todas as chaves mapeadas
-                for(let i = 0; i < solicitacoesSelecionadasIds.length; i++) {
-                    const docId = solicitacoesSelecionadasIds[i];
-                    await window.db_updateDoc(window.db_doc(window.db, "solicitacoes", docId), {
-                        responsavelPcp: respPcp,
-                        areaPcp: areaDesignada,
-                        resposta: txtResposta,
-                        dataProducao: dtProd,
-                        dataRetornoPcp: dtRetPcp,
-                        status: nStatus,
-                        dataAtendimento: agora.toLocaleDateString("pt-BR"),
-                        logAuditoria: timestampLog
-                    });
-                }
-                
-                document.getElementById("modalResposta").style.display = "none";
-                alert(`Sucesso! ${solicitacoesSelecionadasIds.length} retornos foram atualizados simultaneamente.`);
-                
-                solicitacoesSelecionadasIds = [];
-                const masterChk = document.getElementById("chkSelecionarTodos");
-                if(masterChk) masterChk.checked = false;
-
-            } catch (error) {
-                console.error("Erro ao salvar retorno em massa:", error);
-                alert("Erro ao salvar retornos no Firestore.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "ENVIAR RETORNO";
-            }
-        }
-
-        /* EXPORTAÇÕES */
-        function exportarExcel(){
-            const dadosLimpos = solicitacoes.map(({docId, ...resto}) => resto);
-            const worksheet = XLSX.utils.json_to_sheet(dadosLimpos);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "MTO");
-            XLSX.writeFile(workbook, "Programacao_MTO.xlsx");
-        }
-
-        async function exportarPDF(){
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape');
-            doc.text("Programação MTO - Relatorio Operacional", 14, 15);
-            doc.autoTable({ 
-                html: '#tabelaMtoHTML',
-                startY: 22,
-                theme: 'striped',
-                styles: { fontSize: 7 },
-                columns: [
-                    { header: 'ID', dataKey: '1' }, 
-                    { header: 'TIPO', dataKey: '2' },
-                    { header: 'MERCADO', dataKey: '3' },
-                    { header: 'VENDEDOR', dataKey: '4' },
-                    { header: 'DT SOL', dataKey: '5' },
-                    { header: 'DT PREV', dataKey: '7' },
-                    { header: 'ÁREA', dataKey: '12' },
-                    { header: 'RESP PCP', dataKey: '13' },
-                    { header: 'CLIENTE', dataKey: '14' },
-                    { header: 'QTD', dataKey: '17' },
-                    { header: 'STATUS', dataKey: '19' }
-                ]
-            });
-            doc.save("Programacao_MTO.pdf");
-        }
-    </script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
